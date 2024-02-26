@@ -45,7 +45,7 @@ public class WorkerService : BackgroundService
         StartServer();
         while (!stoppingToken.IsCancellationRequested)
         {
-            await Task.Delay(1000, stoppingToken);
+            
         }
 
         StopServer();
@@ -62,7 +62,7 @@ public class WorkerService : BackgroundService
         }
         catch
         {
-            Console.WriteLine("I could not start");
+            Console.WriteLine("Server could not start");
         }
     }
 

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "qo1UzNz0T27GJuHbtBcgmFvqUPWYP+Md64Cc0sNzvwl4Iqn6/24zOBdliuKYWP0JtyxWKtGh1Ermy6p2TxxYjQ==",
+  "dgSpecHash": "48Ug4E6ODbm+Ei/xSyih8XxnHsn7jjb5Yxbi+bfvkWSl+i2YMcoxvWa+txaS67ODDmb+2r8/LBG1m5ql0ORu4w==",
   "success": true,
-  "projectFilePath": "/Users/danieljr/RiderProjects/WebServer/WebServer/WebServer.csproj",
+  "projectFilePath": "/Users/danieljr/Desktop/Projects/MSFT-Web-Server/WebServer/WebServer/WebServer.csproj",
   "expectedPackageFiles": [
     "/Users/danieljr/.nuget/packages/microsoft.extensions.configuration/8.0.0/microsoft.extensions.configuration.8.0.0.nupkg.sha512",
     "/Users/danieljr/.nuget/packages/microsoft.extensions.configuration.abstractions/8.0.0/microsoft.extensions.configuration.abstractions.8.0.0.nupkg.sha512",

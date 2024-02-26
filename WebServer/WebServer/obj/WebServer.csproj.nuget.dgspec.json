@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/danieljr/RiderProjects/WebServer/WebServer/WebServer.csproj": {}
+    "/Users/danieljr/Desktop/Projects/MSFT-Web-Server/WebServer/WebServer/WebServer.csproj": {}
   },
   "projects": {
-    "/Users/danieljr/RiderProjects/WebServer/WebServer/WebServer.csproj": {
+    "/Users/danieljr/Desktop/Projects/MSFT-Web-Server/WebServer/WebServer/WebServer.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/danieljr/RiderProjects/WebServer/WebServer/WebServer.csproj",
+        "projectUniqueName": "/Users/danieljr/Desktop/Projects/MSFT-Web-Server/WebServer/WebServer/WebServer.csproj",
         "projectName": "WebServer",
-        "projectPath": "/Users/danieljr/RiderProjects/WebServer/WebServer/WebServer.csproj",
+        "projectPath": "/Users/danieljr/Desktop/Projects/MSFT-Web-Server/WebServer/WebServer/WebServer.csproj",
         "packagesPath": "/Users/danieljr/.nuget/packages/",
-        "outputPath": "/Users/danieljr/RiderProjects/WebServer/WebServer/obj/",
+        "outputPath": "/Users/danieljr/Desktop/Projects/MSFT-Web-Server/WebServer/WebServer/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/danieljr/.nuget/NuGet/NuGet.Config"

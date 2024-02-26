@@ -45,7 +45,6 @@ public class WorkerService : BackgroundService
         StartServer();
         while (!stoppingToken.IsCancellationRequested)
         {
-            
         }
 
         StopServer();

@@ -20,7 +20,7 @@ public class WorkerService : BackgroundService
     private void StartServer()
     {
         httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
-        thread = new Thread(new ThreadStart(this.ConnetionThreadMethod));
+        thread = new Thread(new ThreadStart(this.ConnectionThreadMethod));
         thread.Start();
     }
 
@@ -30,7 +30,7 @@ public class WorkerService : BackgroundService
         {
             // Close the socket
             httpServer.Close();
-            
+
             // Kill the thread
             thread.Abort();
         }
@@ -45,17 +45,13 @@ public class WorkerService : BackgroundService
         StartServer();
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (_logger.IsEnabled(LogLevel.Information))
-            {
-                _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-            }
-
             await Task.Delay(1000, stoppingToken);
         }
+
         StopServer();
     }
 
-    private void ConnetionThreadMethod()
+    private void ConnectionThreadMethod()
     {
         try
         {
@@ -95,12 +91,12 @@ public class WorkerService : BackgroundService
                 "HTTP/1.1 200 Everything is Fine" +
                 "\nServer: Microsoft_web_server" +
                 "\nContent-Type: text/html; charset: UTF-8\n\n";
-            
-                String resBody = "<!DOCTYE html> " +
+
+            String resBody = "<!DOCTYE html> " +
                              "<html>" +
                              "<head><title>Microsoft Server</title></head>" +
                              "<body>" +
-                             "<h4>Server Time is: " + time + " </h4>" +
+                             $"<h4>Server Time is: {time} </h4>" +
                              "</body></html>";
 
             String resStr = resHeader + resBody;

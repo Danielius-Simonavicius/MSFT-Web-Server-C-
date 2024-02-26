@@ -1,3 +1,4 @@
+using System.Diagnostics.Eventing.Reader;
 using System.Net.Sockets;
 using System.Net;
 using System.Text;
@@ -8,6 +9,7 @@ public class WorkerService : BackgroundService
 {
     private readonly ILogger<WorkerService> _logger;
     private Socket httpServer;
+    private readonly HttpClient _httpClient;
     private int serverPort = 8080;
     private Thread thread;
 
@@ -84,7 +86,10 @@ public class WorkerService : BackgroundService
                     break;
                 }
             }
-
+            
+            //LogRequestInformation(client);
+            LogRequestData(data);
+            
             // Data Read
             String resHeader =
                 "HTTP/1.1 200 Everything is Fine" +
@@ -106,10 +111,8 @@ public class WorkerService : BackgroundService
             client.Close();
         }
     }
-
-    // public Task StopAsync(CancellationToken cancellationToken)
-    // {
-    //     _logger.LogInformation("Worker stopped at: {time}", DateTimeOffset.Now);
-    //     return Task.CompletedTask;
-    // }
+    private void LogRequestData(string requestData)
+    {
+        _logger.LogInformation($"Request Data: {requestData}");
+    }
 }

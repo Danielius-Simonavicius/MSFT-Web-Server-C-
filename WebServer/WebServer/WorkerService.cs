@@ -89,6 +89,8 @@ public class WorkerService : BackgroundService
             
             //LogRequestInformation(client);
             LogRequestData(data);
+            HttpRequestModel test = new HttpRequestModel();
+            test.ParseHttpRequest(data);
             
             // Data Read
             String resHeader =

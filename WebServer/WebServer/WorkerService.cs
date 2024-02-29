@@ -3,6 +3,8 @@ using System.Net.Sockets;
 using System.Net;
 using System.Reflection.Emit;
 using System.Text;
+using WebServer.Models;
+using WebServer.Services;
 
 namespace WebServer;
 
@@ -11,14 +13,15 @@ public class WorkerService : BackgroundService
     private readonly ILogger<WorkerService> _logger;
     private readonly Socket httpServer;
     private readonly int serverPort = 8080;
-    private Thread thread = null!; 
+    private Thread thread = null!;
 
+    private readonly IHttpRequestParser _parser;
 
-    public WorkerService(ILogger<WorkerService> logger)
+    public WorkerService(ILogger<WorkerService> logger, IHttpRequestParser parser)
     {
         _logger = logger;
         httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
-        
+        _parser = parser;
     }
 
     private void StartServer(CancellationToken stoppingToken)
@@ -89,8 +92,7 @@ public class WorkerService : BackgroundService
             }
             
             LogRequestData(data);
-            HttpRequestModel request = new HttpRequestModel();
-            request.ParseHttpRequest(data);
+            var request = _parser.ParseHttpRequest(data);
             request.Client = handler;
             _logger.LogInformation($"About to sent response to {handler.RemoteEndPoint}");
             await handler.SendToAsync(GetResponse(), handler.RemoteEndPoint!, token);

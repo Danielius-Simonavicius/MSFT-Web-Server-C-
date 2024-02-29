@@ -9,20 +9,20 @@ namespace WebServer;
 public class WorkerService : BackgroundService
 {
     private readonly ILogger<WorkerService> _logger;
-    private Socket httpServer;
-    private readonly HttpClient _httpClient;
-    private int serverPort = 8080;
-    private Thread thread;
+    private readonly Socket httpServer;
+    private readonly int serverPort = 8080;
+    private Thread thread = null!; 
 
 
     public WorkerService(ILogger<WorkerService> logger)
     {
         _logger = logger;
+        httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
+        
     }
 
     private void StartServer(CancellationToken stoppingToken)
     {
-        httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
         thread = new Thread(() => ConnectionThreadMethod(stoppingToken));
         thread.Start();
     }
@@ -33,9 +33,6 @@ public class WorkerService : BackgroundService
         {
             // Close the socket
             httpServer.Close();
-
-            // Kill the thread
-            thread.Abort();
         }
         catch (Exception ex)
         {
@@ -62,8 +59,8 @@ public class WorkerService : BackgroundService
         {
             IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, serverPort);
             httpServer.Bind(endPoint);
-            httpServer.Listen(1);
-            _ = StartListeningForConnection(token);
+            httpServer.Listen(100);
+            _ = StartListeningForData(token);
         }
         catch
         {
@@ -71,35 +68,34 @@ public class WorkerService : BackgroundService
         }
     }
 
-    private async Task StartListeningForConnection(CancellationToken token)
+    private async Task StartListeningForData(CancellationToken token)
     {
         while (!token.IsCancellationRequested)
         {
             var data = "";
-            byte[] bytes = new byte[2048];
-            var client = await httpServer.AcceptAsync(token);
+            byte[] bytes = new byte[1_024];
+            var handler = await httpServer.AcceptAsync(token);
 
-            // Reading the inbound connection data
-            // while (!token.IsCancellationRequested)
-            // {
             while (!token.IsCancellationRequested)
             {
-                int numBytes = await client.ReceiveAsync(bytes, token);
-               
-                var tempData = Encoding.ASCII.GetString(bytes, 0, numBytes);
-                data += tempData;
-                if (string.IsNullOrEmpty(tempData))
-                {
-                    break;
-                }
+                var received = await handler.ReceiveAsync(bytes, token);
+                var partialData = Encoding.ASCII.GetString(bytes, 0, received);
+                data += partialData;
+              
+               if (data.Contains("\r\n"))
+               {
+                   break;
+               }
             }
-
+            
             LogRequestData(data);
             HttpRequestModel request = new HttpRequestModel();
             request.ParseHttpRequest(data);
-            request.Client = client;
-            SendResponse(client);
-
+            request.Client = handler;
+            _logger.LogInformation($"About to sent response to {handler.RemoteEndPoint}");
+            await handler.SendToAsync(GetResponse(), handler.RemoteEndPoint!, token);
+            handler.Close();
+            
             data = string.Empty;
             // break;
 
@@ -107,12 +103,12 @@ public class WorkerService : BackgroundService
         }
     }
 
-    private void SendResponse(Socket client)
+    private byte[] GetResponse()
     {
         var time = DateTime.Now;
 
         String resHeader =
-            "HTTP/1.1 200 Everything is Fine" +
+            "HTTP/1.1 200" +
             "\nServer: Microsoft_web_server" +
             "\nContent-Type: text/html; charset: UTF-8\n\n";
 
@@ -126,8 +122,8 @@ public class WorkerService : BackgroundService
         String resStr = resHeader + resBody;
 
         byte[] resData = Encoding.ASCII.GetBytes(resStr);
-        client.SendTo(resData, client.RemoteEndPoint!);
-        client.Close();
+        return resData;
+
     }
 
     private void LogRequestData(string requestData)

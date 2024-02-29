@@ -1,6 +1,7 @@
 using System.Diagnostics.Eventing.Reader;
 using System.Net.Sockets;
 using System.Net;
+using System.Reflection.Emit;
 using System.Text;
 
 namespace WebServer;
@@ -19,10 +20,10 @@ public class WorkerService : BackgroundService
         _logger = logger;
     }
 
-    private void StartServer()
+    private void StartServer(CancellationToken stoppingToken)
     {
         httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
-        thread = new Thread(new ThreadStart(this.ConnectionThreadMethod));
+        thread = new Thread(() => ConnectionThreadMethod(stoppingToken));
         thread.Start();
     }
 
@@ -44,22 +45,25 @@ public class WorkerService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        StartServer();
-        while (!stoppingToken.IsCancellationRequested)
-        {
-        }
+        await Task.Yield();
 
-        StopServer();
+        StartServer(stoppingToken);
+        // while (!stoppingToken.IsCancellationRequested)
+        // { 
+        //    // Thread.Sleep(100);
+        // }
+        //
+        // StopServer();
     }
 
-    private void ConnectionThreadMethod()
+    private void ConnectionThreadMethod(CancellationToken token)
     {
         try
         {
             IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, serverPort);
             httpServer.Bind(endPoint);
             httpServer.Listen(1);
-            StartListeningForConnection();
+            _ = StartListeningForConnection(token);
         }
         catch
         {
@@ -67,54 +71,67 @@ public class WorkerService : BackgroundService
         }
     }
 
-    private void StartListeningForConnection()
+    private async Task StartListeningForConnection(CancellationToken token)
     {
-        while (true)
+        while (!token.IsCancellationRequested)
         {
-            DateTime time = DateTime.Now;
-            String data = "";
+            var data = "";
             byte[] bytes = new byte[2048];
-            Socket client = httpServer.Accept(); //blocking statement
+            var client = await httpServer.AcceptAsync(token);
 
             // Reading the inbound connection data
-            while (true)
+            // while (!token.IsCancellationRequested)
+            // {
+            while (!token.IsCancellationRequested)
             {
-                int numBytes = client.Receive((bytes));
-                data += Encoding.ASCII.GetString(bytes, 0, numBytes);
-                if (data.IndexOf("\r\n") > -1)
+                int numBytes = await client.ReceiveAsync(bytes, token);
+               
+                var tempData = Encoding.ASCII.GetString(bytes, 0, numBytes);
+                data += tempData;
+                if (string.IsNullOrEmpty(tempData))
                 {
                     break;
                 }
             }
-            
-            //LogRequestInformation(client);
+
             LogRequestData(data);
-            HttpRequestModel test = new HttpRequestModel();
-            test.ParseHttpRequest(data);
-            
-            // Data Read
-            String resHeader =
-                "HTTP/1.1 200 Everything is Fine" +
-                "\nServer: Microsoft_web_server" +
-                "\nContent-Type: text/html; charset: UTF-8\n\n";
+            HttpRequestModel request = new HttpRequestModel();
+            request.ParseHttpRequest(data);
+            request.Client = client;
+            SendResponse(client);
 
-            String resBody = "<!DOCTYE html> " +
-                             "<html>" +
-                             "<head><title>Microsoft Server</title></head>" +
-                             "<body>" +
-                             $"<h4>Server Time is: {time} </h4>" +
-                             "</body></html>";
+            data = string.Empty;
+            // break;
 
-            String resStr = resHeader + resBody;
-
-            byte[] resData = Encoding.ASCII.GetBytes(resStr);
-
-            client.SendTo(resData, client.RemoteEndPoint);
-            client.Close();
+            // }
         }
     }
+
+    private void SendResponse(Socket client)
+    {
+        var time = DateTime.Now;
+
+        String resHeader =
+            "HTTP/1.1 200 Everything is Fine" +
+            "\nServer: Microsoft_web_server" +
+            "\nContent-Type: text/html; charset: UTF-8\n\n";
+
+        String resBody = "<!DOCTYPE html> " +
+                         "<html>" +
+                         "<head><title>Microsoft Server</title></head>" +
+                         "<body>" +
+                         $"<h4>Server Time is: {time} </h4>" +
+                         "</body></html>";
+
+        String resStr = resHeader + resBody;
+
+        byte[] resData = Encoding.ASCII.GetBytes(resStr);
+        client.SendTo(resData, client.RemoteEndPoint!);
+        client.Close();
+    }
+
     private void LogRequestData(string requestData)
     {
-        _logger.LogInformation($"Request Data: {requestData}");
+        _logger.LogInformation($"Request Data: \r\n{requestData}");
     }
 }

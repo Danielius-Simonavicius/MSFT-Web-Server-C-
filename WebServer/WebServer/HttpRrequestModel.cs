@@ -1,8 +1,17 @@
+using System.Net.Sockets;
+
 namespace WebServer;
 
 public class HttpRequestModel
 {
-    public string Host { get; set; }
+    public string Host { get; set; } = string.Empty;
+    public string MethodType { get; set; } = string.Empty;
+    public string Connection { get; set; }= string.Empty;
+    public string UserAgent { get; set; }= string.Empty;
+
+    public Socket? Client { get; set; }
+
+
     private IList<KeyValuePair<string, string>> LoggedData { get; set; } = new List<KeyValuePair<string, string>>();
     //keyValuePairs.Add(new KeyValuePair<string, string>("Name", "John"));
     private static string ExtractValue(string[] lines, string key)
@@ -18,7 +27,7 @@ public class HttpRequestModel
         return string.Empty;
     }
 
-    public IList<KeyValuePair<string, string>> ParseHttpRequest(string input)
+    public void ParseHttpRequest(string input)
     {
         //HttpRequestModel httpRequest = new HttpRequestModel();
 
@@ -26,9 +35,18 @@ public class HttpRequestModel
         string[] lines = input.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
         
         // Extract RequestData and Host
-        string Host = ExtractValue(lines, "Host:");
-        Console.WriteLine($"EXTRACTED line: {Host}");
+        Host = ExtractValue(lines, "Host:");
+        MethodType = lines[0];
+        //ExtractValue(lines, "Request Data:").Split(' ')[1];
+        Connection = ExtractValue(lines, "Connection:");
+        UserAgent = ExtractValue(lines, "User-Agent:");
+       
         LoggedData.Add(new KeyValuePair<string, string>("Host:", Host));
+        LoggedData.Add(new KeyValuePair<string, string>("Method:", MethodType));
+        LoggedData.Add(new KeyValuePair<string, string>("Connection:", Connection));
+        LoggedData.Add(new KeyValuePair<string, string>("User-Agent:", UserAgent));
+        
+        
         
         //
         // // Extract headers after 'Host'
@@ -49,6 +67,6 @@ public class HttpRequestModel
         //     }
         // }
 
-        return LoggedData;
+        //return LoggedData;
     }
 }

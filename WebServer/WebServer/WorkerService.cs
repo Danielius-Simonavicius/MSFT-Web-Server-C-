@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics.Eventing.Reader;
 using System.Net.Sockets;
 using System.Net;
@@ -14,6 +15,8 @@ public class WorkerService : BackgroundService
     private readonly Socket httpServer;
     private readonly int serverPort = 8080;
     private Thread thread = null!;
+
+    private readonly ConcurrentQueue<HttpRequestModel> RequestsQueue = new();
 
     private readonly IHttpRequestParser _parser;
 
@@ -48,11 +51,20 @@ public class WorkerService : BackgroundService
         await Task.Yield();
 
         StartServer(stoppingToken);
-        // while (!stoppingToken.IsCancellationRequested)
-        // { 
-        //    // Thread.Sleep(100);
-        // }
-        //
+         while (!stoppingToken.IsCancellationRequested)
+         { 
+        
+             var request = RequestsQueue.TryDequeue(out var requestModel) ? requestModel : null;
+             if (request != null 
+                 && request.Client != null)
+             {
+                 var handler = request.Client;
+                  await handler.SendToAsync(GetResponse(), handler.RemoteEndPoint!, stoppingToken);
+                 //            handler.Close();
+             }
+             Thread.Sleep(100);
+         }
+        
         // StopServer();
     }
 
@@ -95,8 +107,8 @@ public class WorkerService : BackgroundService
             var request = _parser.ParseHttpRequest(data);
             request.Client = handler;
             _logger.LogInformation($"About to sent response to {handler.RemoteEndPoint}");
-            await handler.SendToAsync(GetResponse(), handler.RemoteEndPoint!, token);
-            handler.Close();
+            RequestsQueue.Enqueue(request);
+           
             
             data = string.Empty;
             // break;

@@ -60,7 +60,7 @@ public class WorkerService : BackgroundService
              {
                  var handler = request.Client;
                   await handler.SendToAsync(GetResponse(), handler.RemoteEndPoint!, stoppingToken);
-                 //            handler.Close();
+                             handler.Close();
              }
              Thread.Sleep(100);
          }

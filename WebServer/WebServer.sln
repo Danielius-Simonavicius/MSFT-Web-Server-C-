@@ -7,6 +7,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Files", "Solution 
 		.gitignore = .gitignore
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebServerTests", "WebServerTests\WebServerTests.csproj", "{FB5A4FD3-A277-4459-B345-7E126CF8B80E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,5 +19,9 @@ Global
 		{6064BA6D-B9D6-4220-B106-E133CB95BA27}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6064BA6D-B9D6-4220-B106-E133CB95BA27}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6064BA6D-B9D6-4220-B106-E133CB95BA27}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB5A4FD3-A277-4459-B345-7E126CF8B80E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB5A4FD3-A277-4459-B345-7E126CF8B80E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB5A4FD3-A277-4459-B345-7E126CF8B80E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB5A4FD3-A277-4459-B345-7E126CF8B80E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

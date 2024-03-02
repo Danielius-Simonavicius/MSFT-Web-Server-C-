@@ -55,8 +55,7 @@ public class WorkerService : BackgroundService
          { 
         
              var request = RequestsQueue.TryDequeue(out var requestModel) ? requestModel : null;
-             if (request != null 
-                 && request.Client != null)
+             if (request != null && request.Client != null)
              {
                  var handler = request.Client;
                   await handler.SendToAsync(GetResponse(), handler.RemoteEndPoint!, stoppingToken);
@@ -122,9 +121,9 @@ public class WorkerService : BackgroundService
         var time = DateTime.Now;
 
         String resHeader =
-            "HTTP/1.1 200" +
-            "\nServer: Microsoft_web_server" +
-            "\nContent-Type: text/html; charset: UTF-8\n\n";
+            "HTTP/1.1 200 OK\r\n" +
+            "Server: Microsoft_web_server\r\n" +
+            "Content-Type: text/html; charset=UTF-8\r\n\r\n";
 
         String resBody = "<!DOCTYPE html> " +
                          "<html>" +
@@ -142,6 +141,6 @@ public class WorkerService : BackgroundService
 
     private void LogRequestData(string requestData)
     {
-        _logger.LogInformation($"Request Data: \r\n{requestData}");
+        _logger.LogInformation($"\n{requestData}");
     }
 }

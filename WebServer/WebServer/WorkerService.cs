@@ -110,9 +110,6 @@ public class WorkerService : BackgroundService
            
             
             data = string.Empty;
-            // break;
-
-            // }
         }
     }
 

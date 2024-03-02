@@ -7,30 +7,36 @@ public class DefaultHttpParserTests
     [Fact]
     public void ParseHttpRequest_ReturnsModel()
     {
-        string httpInput = @"GET /favicon.ico HTTP/1.1
+        string httpInput = @" GET / HTTP/1.1
       Host: localhost:8080
       Connection: keep-alive
-      Pragma: no-cache
-      Cache-Control: no-cache
-      sec-ch-ua: ""Not A(Brand"";v=""99"", ""Google Chrome"";v=""121"", ""Chromium"";v=""121""
-      sec-ch-ua-mobile: ?0
       User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36
-      sec-ch-ua-platform: ""macOS""
-      Accept: image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
-      Sec-Fetch-Site: same-origin
-      Sec-Fetch-Mode: no-cors
-      Sec-Fetch-Dest: image
-      Referer: http://localhost:8080/
+      Accept: */*
+      Sec-Fetch-Site: none
+      Sec-Fetch-Mode: cors
+      Sec-Fetch-Dest: empty
       Accept-Encoding: gzip, deflate, br
-      Accept-Language: en-GB,en-US;q=0.9,en;q=0.8
+      Accept-Language: en-IE,en-US;q=0.9,en;q=0.8
+      Cookie: .AspNetCore.Antiforgery.ZaPy40bDLtQ=CfDJ8CHPvO_zz11JjaMXNV9ruLMZWNMiWsgCHIeg0LlgIHi4ClDpW5nSkySlIs-9gKa0NYPO5Fvbfizx6iwloJupskWaQcqCw9vj-JY2zCyj7EVTWiH_G-mGUhS32QME1rB4tjjLOpKAwuYH_p9zrqa37Ec
+
 ";
 
         var service = new DefaultHttpParser();
 
         var model = service.ParseHttpRequest(httpInput);
         Assert.Equal("localhost:8080", model.Host);
-        Assert.Equal("GET /favicon.ico HTTP/1.1", model.MethodType);
+        Assert.Equal("GET / HTTP/1.1", model.MethodType);
         
-
+        
+        Assert.Contains(new KeyValuePair<string, string>("Connection", "keep-alive"), model.Headers);
+        Assert.Contains(new KeyValuePair<string, string>("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"), model.Headers);
+        Assert.Contains(new KeyValuePair<string, string>("Accept", "*/*"), model.Headers);
+        Assert.Contains(new KeyValuePair<string, string>("Sec-Fetch-Site", "none"), model.Headers);
+        Assert.Contains(new KeyValuePair<string, string>("Sec-Fetch-Mode", "cors"), model.Headers);
+        Assert.Contains(new KeyValuePair<string, string>("Sec-Fetch-Dest", "empty"), model.Headers);
+        //Assert.Contains(new KeyValuePair<string, string>("Accept-Encoding", "en-IE,en-US;q=0.9,en;q=0.8"), model.Headers);
+        //Assert.Contains(new KeyValuePair<string, string>("Accept-Language", "gzip, deflate, br"), model.Headers);
+        Assert.Contains(new KeyValuePair<string, string>("Cookie", ".AspNetCore.Antiforgery.ZaPy40bDLtQ=CfDJ8CHPvO_zz11JjaMXNV9ruLMZWNMiWsgCHIeg0LlgIHi4ClDpW5nSkySlIs-9gKa0NYPO5Fvbfizx6iwloJupskWaQcqCw9vj-JY2zCyj7EVTWiH_G-mGUhS32QME1rB4tjjLOpKAwuYH_p9zrqa37Ec"), model.Headers);
+        
     }
 }

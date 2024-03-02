@@ -34,8 +34,8 @@ public class DefaultHttpParserTests
         Assert.Contains(new KeyValuePair<string, string>("Sec-Fetch-Site", "none"), model.Headers);
         Assert.Contains(new KeyValuePair<string, string>("Sec-Fetch-Mode", "cors"), model.Headers);
         Assert.Contains(new KeyValuePair<string, string>("Sec-Fetch-Dest", "empty"), model.Headers);
-        //Assert.Contains(new KeyValuePair<string, string>("Accept-Encoding", "en-IE,en-US;q=0.9,en;q=0.8"), model.Headers);
-        //Assert.Contains(new KeyValuePair<string, string>("Accept-Language", "gzip, deflate, br"), model.Headers);
+        Assert.Contains(new KeyValuePair<string, string>("Accept-Encoding", "gzip, deflate, br"), model.Headers);
+        Assert.Contains(new KeyValuePair<string, string>("Accept-Language", "en-IE,en-US;q=0.9,en;q=0.8"), model.Headers);
         Assert.Contains(new KeyValuePair<string, string>("Cookie", ".AspNetCore.Antiforgery.ZaPy40bDLtQ=CfDJ8CHPvO_zz11JjaMXNV9ruLMZWNMiWsgCHIeg0LlgIHi4ClDpW5nSkySlIs-9gKa0NYPO5Fvbfizx6iwloJupskWaQcqCw9vj-JY2zCyj7EVTWiH_G-mGUhS32QME1rB4tjjLOpKAwuYH_p9zrqa37Ec"), model.Headers);
         
     }

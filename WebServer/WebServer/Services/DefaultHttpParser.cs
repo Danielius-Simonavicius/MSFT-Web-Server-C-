@@ -12,7 +12,7 @@ public class DefaultHttpParser : IHttpRequestParser
         {
             if (line.Trim().StartsWith(key, StringComparison.OrdinalIgnoreCase))
             {
-                return line.Trim().Substring(key.Length + 1);
+                return line.Trim().Substring(key.Length + 1).Trim();
             }
         }
 

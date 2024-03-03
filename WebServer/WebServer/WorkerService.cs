@@ -11,7 +11,7 @@ namespace WebServer;
 
 public class WorkerService : BackgroundService
 {
-    private readonly IOptions<MyConfig> _config;
+    private readonly ServerConfig _config;
     private readonly ILogger<WorkerService> _logger;
     private readonly Socket httpServer;
     private readonly int serverPort = 8080; //todo change this value
@@ -21,7 +21,7 @@ public class WorkerService : BackgroundService
 
     private readonly IHttpRequestParser _parser;
 
-    public WorkerService(ILogger<WorkerService> logger, IHttpRequestParser parser, IOptions<MyConfig> config)
+    public WorkerService(ILogger<WorkerService> logger, IHttpRequestParser parser, ServerConfig config)
     {
         _config = config;
         _logger = logger;
@@ -54,7 +54,7 @@ public class WorkerService : BackgroundService
     {
         await Task.Yield();
       
-        var rootFolder = _config.Value.RootFolder;
+        var rootFolder = _config.RootFolder;
         
         StartServer(stoppingToken);
          while (!stoppingToken.IsCancellationRequested)

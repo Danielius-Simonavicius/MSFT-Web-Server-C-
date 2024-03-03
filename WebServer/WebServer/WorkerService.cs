@@ -6,26 +6,29 @@ using System.Reflection.Emit;
 using System.Text;
 using WebServer.Models;
 using WebServer.Services;
-
 namespace WebServer;
 
 public class WorkerService : BackgroundService
 {
+    private readonly IConfiguration _configuration;
     private readonly ILogger<WorkerService> _logger;
     private readonly Socket httpServer;
-    private readonly int serverPort = 8080;
+    private readonly int serverPort = 8080; //todo change this value
     private Thread thread = null!;
 
     private readonly ConcurrentQueue<HttpRequestModel> RequestsQueue = new();
 
     private readonly IHttpRequestParser _parser;
 
-    public WorkerService(ILogger<WorkerService> logger, IHttpRequestParser parser)
+    public WorkerService(ILogger<WorkerService> logger, IHttpRequestParser parser, IConfiguration configuration)
     {
+        _configuration = configuration;
         _logger = logger;
         httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
         _parser = parser;
     }
+
+   
 
     private void StartServer(CancellationToken stoppingToken)
     {
@@ -49,7 +52,7 @@ public class WorkerService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await Task.Yield();
-
+        var rootFolder = _configuration.GetValue<string>("ServerSettings:RootFolder");
         StartServer(stoppingToken);
          while (!stoppingToken.IsCancellationRequested)
          { 

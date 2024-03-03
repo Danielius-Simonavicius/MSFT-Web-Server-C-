@@ -21,9 +21,9 @@ public class WorkerService : BackgroundService
 
     private readonly IHttpRequestParser _parser;
 
-    public WorkerService(ILogger<WorkerService> logger, IHttpRequestParser parser, ServerConfig config)
+    public WorkerService(ILogger<WorkerService> logger, IHttpRequestParser parser, IOptions<ServerConfig> config)
     {
-        _config = config;
+        _config = config.Value;
         _logger = logger;
         httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
         _parser = parser;

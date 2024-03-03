@@ -1,4 +1,5 @@
 using WebServer;
+using WebServer.Models;
 using WebServer.Services;
 
 namespace WebServer
@@ -7,14 +8,12 @@ namespace WebServer
     {
         static void Main(String[] args)
         {
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json")
-                .Build();
+
             var builder = Host.CreateApplicationBuilder(args);
-            builder.Services.AddSingleton<IConfiguration>(configuration);
-            
             builder.Services.AddTransient<IHttpRequestParser, DefaultHttpParser>();
             builder.Services.AddHostedService<WorkerService>();
+
+            builder.Services.Configure<MyConfig>(builder.Configuration.GetSection("MyConfig"));
 
             var host = builder.Build();
             host.Run();

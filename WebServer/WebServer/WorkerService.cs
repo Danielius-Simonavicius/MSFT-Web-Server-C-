@@ -4,13 +4,14 @@ using System.Net.Sockets;
 using System.Net;
 using System.Reflection.Emit;
 using System.Text;
+using Microsoft.Extensions.Options;
 using WebServer.Models;
 using WebServer.Services;
 namespace WebServer;
 
 public class WorkerService : BackgroundService
 {
-    private readonly IConfiguration _configuration;
+    private readonly IOptions<MyConfig> _config;
     private readonly ILogger<WorkerService> _logger;
     private readonly Socket httpServer;
     private readonly int serverPort = 8080; //todo change this value
@@ -20,9 +21,9 @@ public class WorkerService : BackgroundService
 
     private readonly IHttpRequestParser _parser;
 
-    public WorkerService(ILogger<WorkerService> logger, IHttpRequestParser parser, IConfiguration configuration)
+    public WorkerService(ILogger<WorkerService> logger, IHttpRequestParser parser, IOptions<MyConfig> config)
     {
-        _configuration = configuration;
+        _config = config;
         _logger = logger;
         httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
         _parser = parser;
@@ -52,7 +53,9 @@ public class WorkerService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await Task.Yield();
-        var rootFolder = _configuration.GetValue<string>("ServerSettings:RootFolder");
+      
+        var rootFolder = _config.Value.RootFolder;
+        
         StartServer(stoppingToken);
          while (!stoppingToken.IsCancellationRequested)
          { 

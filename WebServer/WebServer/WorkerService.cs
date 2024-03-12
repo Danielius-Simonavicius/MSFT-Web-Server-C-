@@ -7,11 +7,12 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using WebServer.Models;
 using WebServer.Services;
+
 namespace WebServer;
 
 public class WorkerService : BackgroundService
 {
-    private readonly ServerConfig _config;
+    private readonly ServerConfigModel _configModel;
     private readonly ILogger<WorkerService> _logger;
     private readonly Socket httpServer;
     private readonly int serverPort = 8080; //todo change this value
@@ -21,15 +22,14 @@ public class WorkerService : BackgroundService
 
     private readonly IHttpRequestParser _parser;
 
-    public WorkerService(ILogger<WorkerService> logger, IHttpRequestParser parser, IOptions<ServerConfig> config)
+    public WorkerService(ILogger<WorkerService> logger, IHttpRequestParser parser, IOptions<ServerConfigModel> config)
     {
-        _config = config.Value;
+        _configModel = config.Value;
         _logger = logger;
         httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
         _parser = parser;
     }
 
-   
 
     private void StartServer(CancellationToken stoppingToken)
     {
@@ -53,24 +53,21 @@ public class WorkerService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await Task.Yield();
-      
-        var rootFolder = _config.RootFolder;
-        
+
+        var rootFolder = _configModel.RootFolder;
         StartServer(stoppingToken);
-         while (!stoppingToken.IsCancellationRequested)
-         { 
-        
-             var request = RequestsQueue.TryDequeue(out var requestModel) ? requestModel : null;
-             if (request != null && request.Client != null)
-             {
-                 var handler = request.Client;
-                  await handler.SendToAsync(GetResponse(), handler.RemoteEndPoint!, stoppingToken);
-                             handler.Close();
-             }
-             Thread.Sleep(100);
-         }
-        
-        // StopServer();
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            var request = RequestsQueue.TryDequeue(out var requestModel) ? requestModel : null;
+            if (request != null && request.Client != null)
+            {
+                var handler = request.Client;
+                await handler.SendToAsync(GetResponse(), handler.RemoteEndPoint!, stoppingToken);
+                handler.Close();
+            }
+
+            Thread.Sleep(100);
+        }
     }
 
     private void ConnectionThreadMethod(CancellationToken token)
@@ -101,24 +98,24 @@ public class WorkerService : BackgroundService
                 var received = await handler.ReceiveAsync(bytes, token);
                 var partialData = Encoding.ASCII.GetString(bytes, 0, received);
                 data += partialData;
-              
-               if (data.Contains("\r\n"))
-               {
-                   break;
-               }
+
+                if (data.Contains("\r\n"))
+                {
+                    break;
+                }
             }
-            
+
             LogRequestData(data);
             var request = _parser.ParseHttpRequest(data);
             request.Client = handler;
             _logger.LogInformation($"About to sent response to {handler.RemoteEndPoint}");
             RequestsQueue.Enqueue(request);
-           
-            
+
+
             data = string.Empty;
         }
     }
-
+    
     private byte[] GetResponse()
     {
         var time = DateTime.Now;
@@ -126,7 +123,8 @@ public class WorkerService : BackgroundService
         String resHeader =
             "HTTP/1.1 200 OK\r\n" +
             "Server: Microsoft_web_server\r\n" +
-            "Content-Type: text/html; charset=UTF-8\r\n\r\n";
+            "Content-Type: text/html; charset=UTF-8\r\n" +
+            "Access-Control-Allow-Origin: *\r\n\r\n";
 
         String resBody = "<!DOCTYPE html> " +
                          "<html>" +
@@ -134,13 +132,15 @@ public class WorkerService : BackgroundService
                          "<body>" +
                          $"<h4>Server Time is: {time} </h4>" +
                          "</body></html>";
-
+        
         String resStr = resHeader + resBody;
-
+        
         byte[] resData = Encoding.ASCII.GetBytes(resStr);
         return resData;
 
     }
+
+   
 
     private void LogRequestData(string requestData)
     {

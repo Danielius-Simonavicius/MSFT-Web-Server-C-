@@ -14,27 +14,28 @@ public class WorkerService : BackgroundService
 {
     private readonly ServerConfigModel _configModel;
     private readonly ILogger<WorkerService> _logger;
-    private readonly Socket httpServer;
-    private readonly int serverPort = 8080; //todo change this value
-    private Thread thread = null!;
+    private readonly Socket _httpServer;
+    private readonly int _serverPort;
+    private Thread _thread = null!;
 
-    private readonly ConcurrentQueue<HttpRequestModel> RequestsQueue = new();
+    private readonly ConcurrentQueue<HttpRequestModel> _requestsQueue = new();
 
     private readonly IHttpRequestParser _parser;
 
     public WorkerService(ILogger<WorkerService> logger, IHttpRequestParser parser, IOptions<ServerConfigModel> config)
     {
         _configModel = config.Value;
+        _serverPort = _configModel.Port;
         _logger = logger;
-        httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
+        _httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
         _parser = parser;
     }
 
 
     private void StartServer(CancellationToken stoppingToken)
     {
-        thread = new Thread(() => ConnectionThreadMethod(stoppingToken));
-        thread.Start();
+        _thread = new Thread(() => ConnectionThreadMethod(stoppingToken));
+        _thread.Start();
     }
 
     private void StopServer()
@@ -42,7 +43,7 @@ public class WorkerService : BackgroundService
         try
         {
             // Close the socket
-            httpServer.Close();
+            _httpServer.Close();
         }
         catch (Exception ex)
         {
@@ -58,7 +59,7 @@ public class WorkerService : BackgroundService
         StartServer(stoppingToken);
         while (!stoppingToken.IsCancellationRequested)
         {
-            var request = RequestsQueue.TryDequeue(out var requestModel) ? requestModel : null;
+            var request = _requestsQueue.TryDequeue(out var requestModel) ? requestModel : null;
             if (request != null && request.Client != null)
             {
                 var handler = request.Client;
@@ -74,9 +75,9 @@ public class WorkerService : BackgroundService
     {
         try
         {
-            IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, serverPort);
-            httpServer.Bind(endPoint);
-            httpServer.Listen(100);
+            IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, _serverPort);
+            _httpServer.Bind(endPoint);
+            _httpServer.Listen(100);
             _ = StartListeningForData(token);
         }
         catch
@@ -90,8 +91,8 @@ public class WorkerService : BackgroundService
         while (!token.IsCancellationRequested)
         {
             var data = "";
-            byte[] bytes = new byte[1_024];
-            var handler = await httpServer.AcceptAsync(token);
+            var bytes = new byte[1_024];
+            var handler = await _httpServer.AcceptAsync(token);
 
             while (!token.IsCancellationRequested)
             {
@@ -109,7 +110,7 @@ public class WorkerService : BackgroundService
             var request = _parser.ParseHttpRequest(data);
             request.Client = handler;
             _logger.LogInformation($"About to sent response to {handler.RemoteEndPoint}");
-            RequestsQueue.Enqueue(request);
+            _requestsQueue.Enqueue(request);
 
 
             data = string.Empty;

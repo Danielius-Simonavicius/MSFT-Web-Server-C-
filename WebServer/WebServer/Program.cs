@@ -12,8 +12,6 @@ namespace WebServer
             var builder = Host.CreateApplicationBuilder(args);
             builder.Services.AddTransient<IHttpRequestParser, DefaultHttpParser>();
             builder.Services.AddHostedService<WorkerService>();
-            
-
             builder.Services.Configure<ServerConfigModel>(builder.Configuration.GetSection("ServerConfig"));
             var host = builder.Build();
             host.Run();

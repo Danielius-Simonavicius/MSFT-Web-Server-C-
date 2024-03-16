@@ -108,22 +108,33 @@ public class WorkerService : BackgroundService
     
     private byte[] GetResponse(string path, WebsiteConfigModel website)
     {
+        
+        string statusCode = "200 OK";
         string fileName = path;
+        
         if (string.IsNullOrEmpty(fileName) || fileName.Equals("/"))
         {
             fileName = website.DefaultPage;
         }
         else if (fileName.StartsWith($"/"))
         {
-            fileName = fileName[1..];
+            fileName = fileName.Substring(1);
         }
-        var time = DateTime.Now;
 
         var rootFolder = _configModel.RootFolder;
 
         var requestedFile = Path.Combine(rootFolder, website.Path, fileName);
         
+        // File doesn't exist, return 404 Not Found
+        if (!File.Exists(requestedFile))
+        {
+            Console.WriteLine("File not found!");
+            return BadRequest404(website,statusCode);
+        }
+        
+        
         var file = File.ReadAllBytes(requestedFile);
+        
         
         //TODO: is there better way to detect??
         string contentType = "text/html";
@@ -136,16 +147,25 @@ public class WorkerService : BackgroundService
         }
         
         String resHeader =
-            "HTTP/1.1 200 OK\r\n" +
+            $"HTTP/1.1 {statusCode}\r\n" +
             "Server: Microsoft_web_server\r\n" +
             $"Content-Type: {contentType}; charset=UTF-8\r\n" +
             $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n\r\n";
-
-        String resStr = resHeader;
         
-       var resData = Encoding.ASCII.GetBytes(resStr).Concat(file);
+       var resData = Encoding.ASCII.GetBytes(resHeader).Concat(file);
         return resData.ToArray();
 
+    }
+
+    public byte[] BadRequest404(WebsiteConfigModel website,string statusCode)
+    {
+        statusCode = "404 Not found";
+        String responseHeader =
+            $"HTTP/1.1 {statusCode}\r\n" +
+            "Server: Microsoft_web_server\r\n" +
+            $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n\r\n";
+        var responseData = Encoding.ASCII.GetBytes(responseHeader);
+        return responseData.ToArray();
     }
 
    

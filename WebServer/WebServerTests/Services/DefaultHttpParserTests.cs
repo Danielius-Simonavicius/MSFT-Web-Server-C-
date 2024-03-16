@@ -25,7 +25,7 @@ public class DefaultHttpParserTests
 
         var model = service.ParseHttpRequest(httpInput);
         Assert.Equal("localhost:8080", model.Host);
-        Assert.Equal("GET / HTTP/1.1", model.MethodType);
+        Assert.Equal("GET / HTTP/1.1", model.RequestType);
         
         
         Assert.Contains(new KeyValuePair<string, string>("Connection", "keep-alive"), model.Headers);

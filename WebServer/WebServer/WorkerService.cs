@@ -13,6 +13,7 @@ namespace WebServer;
 public class WorkerService : BackgroundService
 {
     private readonly ServerConfigModel _configModel;
+    private readonly WebsiteConfigModel _webConfigModel;
     private readonly ILogger<WorkerService> _logger;
     private readonly Socket _httpServer;
     private readonly int _serverPort;
@@ -37,20 +38,7 @@ public class WorkerService : BackgroundService
         _thread = new Thread(() => ConnectionThreadMethod(stoppingToken));
         _thread.Start();
     }
-
-    private void StopServer()
-    {
-        try
-        {
-            // Close the socket
-            _httpServer.Close();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Stopping failed");
-        }
-    }
-
+    
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await Task.Yield();
@@ -59,11 +47,12 @@ public class WorkerService : BackgroundService
         StartServer(stoppingToken);
         while (!stoppingToken.IsCancellationRequested)
         {
-            var request = _requestsQueue.TryDequeue(out var requestModel) ? requestModel : null;
-            if (request != null && request.Client != null)
+            
+            if (_requestsQueue.TryDequeue(out var requestModel) 
+                && requestModel.Client != null)
             {
-                var handler = request.Client;
-                await handler.SendToAsync(GetResponse(), handler.RemoteEndPoint!, stoppingToken);
+                var handler = requestModel.Client;
+                await handler.SendToAsync(GetResponse(requestModel.Path,_configModel.WebsiteConfig.First((x) => x.IsDefault)), handler.RemoteEndPoint!, stoppingToken);
                 handler.Close();
             }
 
@@ -117,27 +106,45 @@ public class WorkerService : BackgroundService
         }
     }
     
-    private byte[] GetResponse()
+    private byte[] GetResponse(string path, WebsiteConfigModel website)
     {
+        string fileName = path;
+        if (string.IsNullOrEmpty(fileName) || fileName.Equals("/"))
+        {
+            fileName = website.DefaultPage;
+        }
+        else if (fileName.StartsWith($"/"))
+        {
+            fileName = fileName[1..];
+        }
         var time = DateTime.Now;
 
+        var rootFolder = _configModel.RootFolder;
+
+        var requestedFile = Path.Combine(rootFolder, website.Path, fileName);
+        
+        var file = File.ReadAllBytes(requestedFile);
+        
+        //TODO: is there better way to detect??
+        string contentType = "text/html";
+        if (requestedFile.EndsWith(".js"))
+        {
+            contentType = "text/javascript";
+        }else if (requestedFile.EndsWith(".css"))
+        {
+            contentType = "text/css";
+        }
+        
         String resHeader =
             "HTTP/1.1 200 OK\r\n" +
             "Server: Microsoft_web_server\r\n" +
-            "Content-Type: text/html; charset=UTF-8\r\n" +
-            "Access-Control-Allow-Origin: *\r\n\r\n";
+            $"Content-Type: {contentType}; charset=UTF-8\r\n" +
+            $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n\r\n";
 
-        String resBody = "<!DOCTYPE html> " +
-                         "<html>" +
-                         "<head><title>Microsoft Server</title></head>" +
-                         "<body>" +
-                         $"<h4>Server Time is: {time} </h4>" +
-                         "</body></html>";
+        String resStr = resHeader;
         
-        String resStr = resHeader + resBody;
-        
-        byte[] resData = Encoding.ASCII.GetBytes(resStr);
-        return resData;
+       var resData = Encoding.ASCII.GetBytes(resStr).Concat(file);
+        return resData.ToArray();
 
     }
 

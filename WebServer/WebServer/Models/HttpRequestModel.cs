@@ -5,8 +5,9 @@ namespace WebServer.Models;
 public class HttpRequestModel
 {
     public string Host { get; set; } = string.Empty;
-    public string MethodType { get; set; } = string.Empty;
+    public string RequestType { get; set; } = string.Empty;
     public string Connection { get; set; } = string.Empty;
+    public string Path { get; set; } = string.Empty;
 
     public Socket? Client { get; set; }
 

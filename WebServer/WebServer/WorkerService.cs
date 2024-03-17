@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Net;
 using System.Reflection.Emit;
 using System.Text;
+using Microsoft.Extensions.FileSystemGlobbing.Internal.Patterns;
 using Microsoft.Extensions.Options;
 using WebServer.Models;
 using WebServer.Services;
@@ -52,7 +53,7 @@ public class WorkerService : BackgroundService
                 && requestModel.Client != null)
             {
                 var handler = requestModel.Client;
-                await handler.SendToAsync(GetResponse(requestModel.Path,_configModel.WebsiteConfig.First((x) => x.IsDefault)), handler.RemoteEndPoint!, stoppingToken);
+                await handler.SendToAsync(GetResponse(requestModel,_configModel.WebsiteConfig.First((x) => x.IsDefault)), handler.RemoteEndPoint!, stoppingToken);
                 handler.Close();
             }
 
@@ -106,30 +107,45 @@ public class WorkerService : BackgroundService
         }
     }
     
-    private byte[] GetResponse(string path, WebsiteConfigModel website)
+    private byte[] GetResponse(HttpRequestModel requestModel, WebsiteConfigModel website)
     {
         
         string statusCode = "200 OK";
-        string fileName = path;
+        string fileName = requestModel.Path; // File path e.g. "/styles-XHU57CVJ.css"
+        string methodType = requestModel.RequestType; // Request type e.g. GET, PUT, POST, DELETE
         
+        //Re-routing to default page
         if (string.IsNullOrEmpty(fileName) || fileName.Equals("/"))
         {
             fileName = website.DefaultPage;
         }
+        //Otherwise gets filename client wants
         else if (fileName.StartsWith($"/"))
         {
             fileName = fileName.Substring(1);
         }
-
+        
+        
         var rootFolder = _configModel.RootFolder;
 
         var requestedFile = Path.Combine(rootFolder, website.Path, fileName);
+        
+        if (methodType.Equals("GET")) // Do we sort methods in here like this? one after the other?
+        {
+            // put logic in here
+        }
+
+        if (methodType.Equals("POST"))
+        {
+            //put logic in here
+        }
+        
         
         // File doesn't exist, return 404 Not Found
         if (!File.Exists(requestedFile))
         {
             Console.WriteLine("File not found!");
-            return BadRequest404(website,statusCode);
+            return NotFound404(website,statusCode);
         }
         
         
@@ -137,14 +153,7 @@ public class WorkerService : BackgroundService
         
         
         //TODO: is there better way to detect??
-        string contentType = "text/html";
-        if (requestedFile.EndsWith(".js"))
-        {
-            contentType = "text/javascript";
-        }else if (requestedFile.EndsWith(".css"))
-        {
-            contentType = "text/css";
-        }
+        string contentType = FindContentType(requestedFile);
         
         String resHeader =
             $"HTTP/1.1 {statusCode}\r\n" +
@@ -156,18 +165,36 @@ public class WorkerService : BackgroundService
         return resData.ToArray();
 
     }
+    public static string FindContentType(string requestedFile) =>
+        requestedFile.EndsWith(".js") ? "text/javascript" :
+        requestedFile.EndsWith(".css") ? "text/css" :
+        "text/html";
+    
 
-    public byte[] BadRequest404(WebsiteConfigModel website,string statusCode)
+    // public string FindContentType(string requestedFile)
+    // {
+    //     // if (requestedFile.EndsWith(".js"))
+    //     // {
+    //     //     return "text/javascript";
+    //     // }else if (requestedFile.EndsWith(".css"))
+    //     // {
+    //     //     return "text/css";
+    //     // }
+    //     //
+    //     // return "test/html";
+    // }
+
+    public byte[] NotFound404(WebsiteConfigModel website,string statusCode)
     {
         statusCode = "404 Not found";
         String responseHeader =
             $"HTTP/1.1 {statusCode}\r\n" +
             "Server: Microsoft_web_server\r\n" +
             $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n\r\n";
+        
         var responseData = Encoding.ASCII.GetBytes(responseHeader);
         return responseData.ToArray();
     }
-
    
 
     private void LogRequestData(string requestData)

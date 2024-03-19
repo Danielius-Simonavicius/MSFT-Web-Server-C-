@@ -27,7 +27,10 @@ public class DefaultHttpParser : IHttpRequestParser
 
         //Extracting logged data and placing them into HTTPRequestModel
         model.Host = ExtractValue(lines, "Host");
-        model.MethodType = lines[0].Trim(); //first line is request type: GET, PUT, POST, DELETE etc
+        
+        string[] lineOneParts = lines[0].Split(" "); //splitting 1st line into parts EG. "GET[0], /path[1], HTTP1.1[2]" 
+        model.RequestType = lineOneParts[0]; //Request type GET PUT POST DELETE 
+        model.Path = lineOneParts[1];// /path/to/file
         model.Connection = ExtractValue(lines, "Connection");
 
 
@@ -46,6 +49,7 @@ public class DefaultHttpParser : IHttpRequestParser
                 model.Headers.Add(new KeyValuePair<string, string>(key, value));
             }
         }
+
         return model;
     }
 }

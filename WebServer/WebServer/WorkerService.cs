@@ -13,8 +13,7 @@ namespace WebServer;
 
 public class WorkerService : BackgroundService
 {
-    private readonly ServerConfigModel _configModel;
-    private readonly WebsiteConfigModel _webConfigModel;
+    private readonly ServerConfigModel _config;
     private readonly ILogger<WorkerService> _logger;
     private readonly Socket _httpServer;
     private readonly int _serverPort;
@@ -26,8 +25,8 @@ public class WorkerService : BackgroundService
 
     public WorkerService(ILogger<WorkerService> logger, IHttpRequestParser parser, IOptions<ServerConfigModel> config)
     {
-        _configModel = config.Value;
-        _serverPort = _configModel.Port;
+        _config = config.Value;
+        _serverPort = _config.Port;
         _logger = logger;
         _httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
         _parser = parser;
@@ -43,8 +42,6 @@ public class WorkerService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await Task.Yield();
-
-        var rootFolder = _configModel.RootFolder;
         StartServer(stoppingToken);
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -53,7 +50,7 @@ public class WorkerService : BackgroundService
                 && requestModel.Client != null)
             {
                 var handler = requestModel.Client;
-                await handler.SendToAsync(GetResponse(requestModel,_configModel.WebsiteConfig.First((x) => x.IsDefault)), handler.RemoteEndPoint!, stoppingToken);
+                await handler.SendToAsync(GetResponse(requestModel,_config.WebsiteConfig.First((x) => x.IsDefault)), handler.RemoteEndPoint!, stoppingToken);
                 handler.Close();
             }
 
@@ -126,7 +123,7 @@ public class WorkerService : BackgroundService
         }
         
         
-        var rootFolder = _configModel.RootFolder;
+        var rootFolder = _config.RootFolder;
 
         var requestedFile = Path.Combine(rootFolder, website.Path, fileName);
         
@@ -171,18 +168,7 @@ public class WorkerService : BackgroundService
         "text/html";
     
 
-    // public string FindContentType(string requestedFile)
-    // {
-    //     // if (requestedFile.EndsWith(".js"))
-    //     // {
-    //     //     return "text/javascript";
-    //     // }else if (requestedFile.EndsWith(".css"))
-    //     // {
-    //     //     return "text/css";
-    //     // }
-    //     //
-    //     // return "test/html";
-    // }
+
 
     public byte[] NotFound404(WebsiteConfigModel website,string statusCode)
     {

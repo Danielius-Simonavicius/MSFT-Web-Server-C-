@@ -13,7 +13,6 @@ namespace WebServer
             builder.Services.AddTransient<IHttpRequestParser, DefaultHttpParser>();
             builder.Services.AddHostedService<WorkerService>();
             builder.Services.Configure<ServerConfigModel>(builder.Configuration.GetSection("ServerConfig"));
-            //builder.Services.Configure<WebsiteConfigModel>(builder.Configuration.GetSection("WebsiteConfig"));
             var host = builder.Build();
             host.Run();
         }

@@ -1741,19 +1741,19 @@
     ]
   },
   "packageFolders": {
-    "/Users/danieljr/.nuget/packages/": {}
+    "/Users/mehir/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/danieljr/RiderProjects/WebServer/WebServer/WebServer.csproj",
+      "projectUniqueName": "/Users/mehir/Library/Mobile Documents/com~apple~CloudDocs/GitHub/MSFT-Web-Server-C-/WebServer/WebServer/WebServer.csproj",
       "projectName": "WebServer",
-      "projectPath": "/Users/danieljr/RiderProjects/WebServer/WebServer/WebServer.csproj",
-      "packagesPath": "/Users/danieljr/.nuget/packages/",
-      "outputPath": "/Users/danieljr/RiderProjects/WebServer/WebServer/obj/",
+      "projectPath": "/Users/mehir/Library/Mobile Documents/com~apple~CloudDocs/GitHub/MSFT-Web-Server-C-/WebServer/WebServer/WebServer.csproj",
+      "packagesPath": "/Users/mehir/.nuget/packages/",
+      "outputPath": "/Users/mehir/Library/Mobile Documents/com~apple~CloudDocs/GitHub/MSFT-Web-Server-C-/WebServer/WebServer/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/Users/danieljr/.nuget/NuGet/NuGet.Config"
+        "/Users/mehir/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -1771,6 +1771,11 @@
         "warnAsError": [
           "NU1605"
         ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
       }
     },
     "frameworks": {
@@ -1798,7 +1803,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.101/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.201/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

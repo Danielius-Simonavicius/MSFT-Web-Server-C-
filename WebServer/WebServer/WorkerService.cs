@@ -110,13 +110,21 @@ public class WorkerService : BackgroundService
         string statusCode = "200 OK";
         string fileName = requestModel.Path; // File path e.g. "/styles-XHU57CVJ.css"
         string methodType = requestModel.RequestType; // Request type e.g. GET, PUT, POST, DELETE
+        string _WebSite = website.Path;
         
-        //Re-routing to default page
+        // if (fileName.Count(c => c == '/') == 2)
+        // {
+        //     string[] parts = fileName.Split("/");
+        //     _WebSite  = parts[0]; //e.g.
+        //     fileName = parts[1];
+        // }
+        //Re-routing to default page in website
+        
         if (string.IsNullOrEmpty(fileName) || fileName.Equals("/"))
         {
-            fileName = website.DefaultPage;
+            fileName = website.DefaultPage; //   fileName = "index.html"
         }
-        //Otherwise gets filename client wants
+        //Otherwise gets filename client wants 
         else if (fileName.StartsWith($"/"))
         {
             fileName = fileName.Substring(1);
@@ -125,7 +133,7 @@ public class WorkerService : BackgroundService
         
         var rootFolder = _config.RootFolder;
 
-        var requestedFile = Path.Combine(rootFolder, website.Path, fileName);
+        var requestedFile = Path.Combine(rootFolder, _WebSite, fileName);
         
         if (methodType.Equals("GET")) // Do we sort methods in here like this? one after the other?
         {
@@ -141,7 +149,7 @@ public class WorkerService : BackgroundService
         // File doesn't exist, return 404 Not Found
         if (!File.Exists(requestedFile))
         {
-            Console.WriteLine("File not found!");
+            Console.WriteLine($"File not found: {requestedFile}");
             return NotFound404(website,statusCode);
         }
         

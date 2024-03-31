@@ -17,26 +17,26 @@ public class WorkerService : BackgroundService
 {
     private readonly ServerConfigModel _config;
     private readonly ILogger<WorkerService> _logger;
-    //private readonly Socket _httpServer;
-    //private readonly int _serverPort;
+    private readonly WebsiteListModel _websiteConfigModels;
     private Thread _thread = null!;
 
     private readonly ConcurrentQueue<HttpRequestModel> _requestsQueue = new();
 
     private readonly IHttpRequestParser _parser;
 
-    public WorkerService(ILogger<WorkerService> logger, IHttpRequestParser parser, IOptions<ServerConfigModel> config)
+    public WorkerService(ILogger<WorkerService> logger, IHttpRequestParser parser, IOptions<ServerConfigModel> config, IOptions<WebsiteListModel> webConfig)
     {
         _config = config.Value;
         //_serverPort = _config.Port;
         _logger = logger;
         _parser = parser;
+        _websiteConfigModels = webConfig.Value;
     }
 
 
     private void StartServer(CancellationToken stoppingToken)
     {
-        var websites = _config.WebsiteConfig;
+        var websites = _websiteConfigModels.WebsiteConfigList;
 
         foreach (var website in websites)
         {
@@ -55,10 +55,9 @@ public class WorkerService : BackgroundService
             if (_requestsQueue.TryDequeue(out var requestModel) && requestModel.Client != null)
             {
                 var handler = requestModel.Client;
-                var HostParts = requestModel.Host.Split(":"); //localhost:8085 (trying to find port e.g. "8085")
-                // string hostPort = requestModel.Host.Substring(10);
-                int port = IntegerType.FromString(HostParts[1]);
-                await handler.SendToAsync(GetResponse(requestModel,_config.WebsiteConfig.First((x) => x.WebsitePort == port)), handler.RemoteEndPoint!, stoppingToken);
+                var hostParts = requestModel.Host.Split(":"); //hostParts = localhost:8085 (trying to find port e.g. "8085")
+                int port = IntegerType.FromString(hostParts[1]);
+                await handler.SendToAsync(GetResponse(requestModel,_websiteConfigModels.WebsiteConfigList.First((x) => x.WebsitePort == port)), handler.RemoteEndPoint!, stoppingToken);
                 handler.Close();
             }
 

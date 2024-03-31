@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "Admin_Site": {
+    "Admin-Panel": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -13,7 +13,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/admin-site",
+            "outputPath": "dist/admin-panel",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": [
@@ -60,10 +60,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "Admin_Site:build:production"
+              "browserTarget": "Admin-Panel:build:production"
             },
             "development": {
-              "browserTarget": "Admin_Site:build:development"
+              "browserTarget": "Admin-Panel:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -71,7 +71,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "Admin_Site:build"
+            "browserTarget": "Admin-Panel:build"
           }
         },
         "test": {
@@ -94,5 +94,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": "08a36b7e-cdda-417b-b0ae-7a05bfb2779b"
   }
 }

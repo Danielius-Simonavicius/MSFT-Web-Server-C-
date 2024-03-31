@@ -5,7 +5,7 @@
     "Websites":[
       {
         "AllowedHosts": "*",
-        "Path": "Admin-Panel/src/assets",
+        "Path": "Admin-Panel/src",
         "DefaultPage" : "index.html",
         "IsDefault": true,
         "WebsitePort" : 9090

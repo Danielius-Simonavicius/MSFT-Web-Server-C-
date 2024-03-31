@@ -1,16 +1,22 @@
 {
-  "WebsiteConfigList":[
-    {
-      "AllowedHosts": "*",
-      "Path": "XtraceLoginPage",
-      "IsDefault": true,
-      "WebsitePort" : 8080
-    },
-    {
-      "AllowedHosts": "*",
-      "Path": "DemoSite1",
-      "IsDefault": true,
-      "WebsitePort" : 8085
-    }
-  ]
+  "ServerConfig": {
+    "Port": 9090,
+    "MaxPendingConnections": 100,
+    "RootFolder": "/Users/danieljr/Desktop/Projects/MSFT-Web-Server-C-/WebServer/WebServer/WebSites",
+    "Websites":[
+      {
+        "AllowedHosts": "*",
+        "Path": "XtraceLoginPage",
+        "IsDefault": true,
+        "WebsitePort" : 8080
+      },
+      {
+        "AllowedHosts": "*",
+        "Path": "DemoSite1",
+        "IsDefault": true,
+        "WebsitePort" : 8085
+      }
+    ]
+  }
+  
 }

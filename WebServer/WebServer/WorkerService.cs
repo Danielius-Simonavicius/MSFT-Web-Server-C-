@@ -17,26 +17,25 @@ public class WorkerService : BackgroundService
 {
     private readonly ServerConfigModel _config;
     private readonly ILogger<WorkerService> _logger;
-    private readonly WebsiteListModel _websiteConfigModels;
     private Thread _thread = null!;
 
     private readonly ConcurrentQueue<HttpRequestModel> _requestsQueue = new();
 
     private readonly IHttpRequestParser _parser;
 
-    public WorkerService(ILogger<WorkerService> logger, IHttpRequestParser parser, IOptions<ServerConfigModel> config, IOptions<WebsiteListModel> webConfig)
+    public WorkerService(ILogger<WorkerService> logger, 
+        IHttpRequestParser parser, IOptions<ServerConfigModel> config)
     {
         _config = config.Value;
         //_serverPort = _config.Port;
         _logger = logger;
         _parser = parser;
-        _websiteConfigModels = webConfig.Value;
     }
 
 
     private void StartServer(CancellationToken stoppingToken)
     {
-        var websites = _websiteConfigModels.WebsiteConfigList;
+        var websites = _config.Websites;
 
         foreach (var website in websites)
         {
@@ -57,7 +56,8 @@ public class WorkerService : BackgroundService
                 var handler = requestModel.Client;
                 var hostParts = requestModel.Host.Split(":"); //hostParts = localhost:8085 (trying to find port e.g. "8085")
                 int port = IntegerType.FromString(hostParts[1]);
-                await handler.SendToAsync(GetResponse(requestModel,_websiteConfigModels.WebsiteConfigList.First((x) => x.WebsitePort == port)), handler.RemoteEndPoint!, stoppingToken);
+                await handler.SendToAsync(GetResponse(requestModel,
+                    _config.Websites.First((x) => x.WebsitePort == port)), handler.RemoteEndPoint!, stoppingToken);
                 handler.Close();
             }
 

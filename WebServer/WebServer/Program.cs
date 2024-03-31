@@ -15,18 +15,15 @@ namespace WebServer
             builder.Services.AddHostedService<WorkerService>();
 
             var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true) // Load appsettings.json
                 .AddJsonFile("WebsiteConfig.json", optional: false,
-                    reloadOnChange: true) // Load AdditionalConfig.json
+                    reloadOnChange: true) 
                 .Build();
 
             builder.Services.AddSingleton(configuration); // Add configuration to services
 
             // Register ServerConfigModel using configuration
             builder.Services.Configure<ServerConfigModel>(configuration.GetSection("ServerConfig"));
-            // Register WebsiteListModel using configuration
-            builder.Services.Configure<WebsiteListModel>(configuration.GetSection("WebsiteConfigList"));
-
+            
             var host = builder.Build();
             host.Run();
             // var builder = Host.CreateApplicationBuilder(args);

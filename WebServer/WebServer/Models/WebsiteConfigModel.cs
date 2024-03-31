@@ -8,4 +8,5 @@ public class WebsiteConfigModel
 
     public bool IsDefault { get; set; } = false;
     public string Path { get; set; } = string.Empty;
+    public int WebsitePort { get; set; }
 }

@@ -2,10 +2,12 @@ using System.Collections.Concurrent;
 using System.Diagnostics.Eventing.Reader;
 using System.Net.Sockets;
 using System.Net;
+using System.Net.WebSockets;
 using System.Reflection.Emit;
 using System.Text;
 using Microsoft.Extensions.FileSystemGlobbing.Internal.Patterns;
 using Microsoft.Extensions.Options;
+using Microsoft.VisualBasic.CompilerServices;
 using WebServer.Models;
 using WebServer.Services;
 
@@ -15,8 +17,8 @@ public class WorkerService : BackgroundService
 {
     private readonly ServerConfigModel _config;
     private readonly ILogger<WorkerService> _logger;
-    private readonly Socket _httpServer;
-    private readonly int _serverPort;
+    //private readonly Socket _httpServer;
+    //private readonly int _serverPort;
     private Thread _thread = null!;
 
     private readonly ConcurrentQueue<HttpRequestModel> _requestsQueue = new();
@@ -26,17 +28,21 @@ public class WorkerService : BackgroundService
     public WorkerService(ILogger<WorkerService> logger, IHttpRequestParser parser, IOptions<ServerConfigModel> config)
     {
         _config = config.Value;
-        _serverPort = _config.Port;
+        //_serverPort = _config.Port;
         _logger = logger;
-        _httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
         _parser = parser;
     }
 
 
     private void StartServer(CancellationToken stoppingToken)
     {
-        _thread = new Thread(() => ConnectionThreadMethod(stoppingToken));
-        _thread.Start();
+        var websites = _config.WebsiteConfig;
+
+        foreach (var website in websites)
+        {
+            _thread = new Thread(() => ConnectionThreadMethod(website,stoppingToken));
+            _thread.Start();
+        }
     }
     
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -46,11 +52,13 @@ public class WorkerService : BackgroundService
         while (!stoppingToken.IsCancellationRequested)
         {
             
-            if (_requestsQueue.TryDequeue(out var requestModel) 
-                && requestModel.Client != null)
+            if (_requestsQueue.TryDequeue(out var requestModel) && requestModel.Client != null)
             {
                 var handler = requestModel.Client;
-                await handler.SendToAsync(GetResponse(requestModel,_config.WebsiteConfig.First((x) => x.IsDefault)), handler.RemoteEndPoint!, stoppingToken);
+                var HostParts = requestModel.Host.Split(":"); //localhost:8085 (trying to find port e.g. "8085")
+                // string hostPort = requestModel.Host.Substring(10);
+                int port = IntegerType.FromString(HostParts[1]);
+                await handler.SendToAsync(GetResponse(requestModel,_config.WebsiteConfig.First((x) => x.WebsitePort == port)), handler.RemoteEndPoint!, stoppingToken);
                 handler.Close();
             }
 
@@ -58,28 +66,29 @@ public class WorkerService : BackgroundService
         }
     }
 
-    private void ConnectionThreadMethod(CancellationToken token)
+    private void ConnectionThreadMethod(WebsiteConfigModel website, CancellationToken token)
     {
         try
         {
-            IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, _serverPort);
-            _httpServer.Bind(endPoint);
-            _httpServer.Listen(100);
-            _ = StartListeningForData(token);
+            IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, website.WebsitePort);
+            var httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            httpServer.Bind(endPoint);
+            httpServer.Listen(100);
+            _ = StartListeningForData(httpServer, token);
         }
-        catch
+        catch(Exception ex)
         {
-            Console.WriteLine("Server could not start");
+            Console.WriteLine($"{website.Path} Server could not start: {ex.Message}");
         }
     }
 
-    private async Task StartListeningForData(CancellationToken token)
+    private async Task StartListeningForData(Socket httpServer, CancellationToken token)
     {
         while (!token.IsCancellationRequested)
         {
             var data = "";
             var bytes = new byte[1_024];
-            var handler = await _httpServer.AcceptAsync(token);
+            var handler = await httpServer.AcceptAsync(token);
 
             while (!token.IsCancellationRequested)
             {
@@ -92,11 +101,11 @@ public class WorkerService : BackgroundService
                     break;
                 }
             }
-
+            
+            
             LogRequestData(data);
             var request = _parser.ParseHttpRequest(data);
             request.Client = handler;
-            _logger.LogInformation($"About to sent response to {handler.RemoteEndPoint}");
             _requestsQueue.Enqueue(request);
 
 
@@ -106,23 +115,15 @@ public class WorkerService : BackgroundService
     
     private byte[] GetResponse(HttpRequestModel requestModel, WebsiteConfigModel website)
     {
-        
         string statusCode = "200 OK";
         string fileName = requestModel.Path; // File path e.g. "/styles-XHU57CVJ.css"
         string methodType = requestModel.RequestType; // Request type e.g. GET, PUT, POST, DELETE
-        string _WebSite = website.Path;
-        
-        // if (fileName.Count(c => c == '/') == 2)
-        // {
-        //     string[] parts = fileName.Split("/");
-        //     _WebSite  = parts[0]; //e.g.
-        //     fileName = parts[1];
-        // }
+        string webSite = website.Path;
+
         //Re-routing to default page in website
-        
         if (string.IsNullOrEmpty(fileName) || fileName.Equals("/"))
         {
-            fileName = website.DefaultPage; //   fileName = "index.html"
+            fileName = website.DefaultPage; // fileName = "index.html"
         }
         //Otherwise gets filename client wants 
         else if (fileName.StartsWith($"/"))
@@ -133,7 +134,7 @@ public class WorkerService : BackgroundService
         
         var rootFolder = _config.RootFolder;
 
-        var requestedFile = Path.Combine(rootFolder, _WebSite, fileName);
+        var requestedFile = Path.Combine(rootFolder, webSite, fileName);
         
         if (methodType.Equals("GET")) // Do we sort methods in here like this? one after the other?
         {
@@ -192,7 +193,7 @@ public class WorkerService : BackgroundService
    
 
     private void LogRequestData(string requestData)
-    {
+    { 
         _logger.LogInformation($"\n{requestData}");
     }
 }

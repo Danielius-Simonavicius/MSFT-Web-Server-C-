@@ -1,0 +1,16 @@
+{
+  "WebsiteConfigList":[
+    {
+      "AllowedHosts": "*",
+      "Path": "XtraceLoginPage",
+      "IsDefault": true,
+      "WebsitePort" : 8080
+    },
+    {
+      "AllowedHosts": "*",
+      "Path": "DemoSite1",
+      "IsDefault": true,
+      "WebsitePort" : 8085
+    }
+  ]
+}

@@ -23,6 +23,13 @@
         "DefaultPage" : "index.html",
         "IsDefault": true,
         "WebsitePort" : 8085
+      },
+      {
+        "AllowedHosts": "*",
+        "Path": "DorianWebsite",
+        "DefaultPage" : "index.html",
+        "IsDefault": true,
+        "WebsitePort" : 8086
       }
     ]
   }

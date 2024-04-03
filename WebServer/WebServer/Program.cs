@@ -20,18 +20,10 @@ namespace WebServer
                 .Build();
 
             builder.Services.AddSingleton(configuration); // Add configuration to services
-
-            // Register ServerConfigModel using configuration
             builder.Services.Configure<ServerConfigModel>(configuration.GetSection("ServerConfig"));
             
             var host = builder.Build();
             host.Run();
-            // var builder = Host.CreateApplicationBuilder(args);
-            // builder.Services.AddTransient<IHttpRequestParser, DefaultHttpParser>();
-            // builder.Services.AddHostedService<WorkerService>();
-            // builder.Services.Configure<ServerConfigModel>(builder.Configuration.GetSection("ServerConfig"));
-            // var host = builder.Build();
-            // host.Run();
         }
     }
 }

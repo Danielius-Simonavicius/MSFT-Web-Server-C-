@@ -4,8 +4,7 @@ using WebServer.Models;
 
 namespace WebServer.Services;
 
-public class DefaultHttpParser : IHttpRequestParser
-{
+public class DefaultHttpParser : IHttpRequestParser {
     private static string ExtractValue(string[] lines, string key)
     {
         foreach (var line in lines)

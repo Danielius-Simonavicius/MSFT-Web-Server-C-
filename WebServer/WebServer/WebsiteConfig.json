@@ -1,0 +1,37 @@
+{
+  "ServerConfig": {
+    "MaxPendingConnections": 100,
+    "RootFolder": "/Users/danieljr/Desktop/Projects/MSFT-Web-Server-C-/WebServer/WebServer/WebSites",
+    "Websites":[
+      {
+        "AllowedHosts": "*",
+        "Path": "Admin-Panel/src",
+        "DefaultPage" : "index.html",
+        "IsDefault": true,
+        "WebsitePort" : 9090
+      },
+      {
+        "AllowedHosts": "*",
+        "Path": "XtraceLoginPage",
+        "DefaultPage" : "index.html",
+        "IsDefault": true,
+        "WebsitePort" : 8080
+      },
+      {
+        "AllowedHosts": "*",
+        "Path": "DemoSite1",
+        "DefaultPage" : "index.html",
+        "IsDefault": true,
+        "WebsitePort" : 8085
+      },
+      {
+        "AllowedHosts": "*",
+        "Path": "DorianWebsite",
+        "DefaultPage" : "index.html",
+        "IsDefault": true,
+        "WebsitePort" : 8086
+      }
+    ]
+  }
+  
+}

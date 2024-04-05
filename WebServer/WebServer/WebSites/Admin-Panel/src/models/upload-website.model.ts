@@ -5,4 +5,5 @@ export class UploadWebsite {
     allowedHosts!: string;
     path!: string;
     defaultPage!: string;
+    folder!: File;
 }

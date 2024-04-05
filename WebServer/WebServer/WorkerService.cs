@@ -139,10 +139,20 @@ public class WorkerService : BackgroundService
         {
             // put logic in here
         }
-
-        if (methodType.Equals("POST"))
+        else if (methodType.Equals("POST") && fileName.Equals("upload"))
         {
-            //put logic in here
+            statusCode = "200 OK";
+            String responseHeader =
+                $"HTTP/1.1 {statusCode}\r\n" +
+                "Server: Microsoft_web_server\r\n" +
+                $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n\r\n";
+        
+            var responseData = Encoding.ASCII.GetBytes(responseHeader);
+            return responseData.ToArray();
+        }
+        else if (methodType.Equals("OPTIONS"))
+        {
+            return OptionsResponse(website);
         }
         
         
@@ -169,6 +179,21 @@ public class WorkerService : BackgroundService
        var resData = Encoding.ASCII.GetBytes(resHeader).Concat(file);
         return resData.ToArray();
 
+    }
+    private byte[] OptionsResponse(WebsiteConfigModel website)
+    {
+        string statusCode = "200 OK";
+        string responseHeader =
+            $"HTTP/1.1 {statusCode}\r\n" +
+            "Server: Microsoft_web_server\r\n" +
+            "Allow: GET, POST, OPTIONS\r\n" +
+            "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n" +
+            "Access-Control-Allow-Headers: Content-Type\r\n" +
+            $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n" + // Allow requests from any origin
+            "\r\n";
+    
+        var responseData = Encoding.ASCII.GetBytes(responseHeader);
+        return responseData;
     }
     public static string FindContentType(string requestedFile) =>
         requestedFile.EndsWith(".js") ? "text/javascript" :

@@ -1,7 +1,18 @@
-<form (ngSubmit)="submitForm()" #form="ngForm">
-  <input type="text" name="name" [(ngModel)]="formData.name" placeholder="Name" required /><br />
-  <input type="text" name="description" [(ngModel)]="formData.description" placeholder="Description" required /><br />
-  <input type="text" name="guid" [(ngModel)]="formData.guid" placeholder="GUID" required /><br />
-  <input type="file" name="folder" (change)="handleFileInput($event)" webkitdirectory directory multiple required /><br />
-  <button type="submit" [disabled]="form.invalid">Upload</button>
+<form #websiteUpload="ngForm" (ngSubmit)="onSubmit()" novalidate>
+  <input type="text" name="name" placeholder="name" [(ngModel)]="formData.name">
+  <input type="text" name="allowedHosts" placeholder="allowedHosts" [(ngModel)]="formData.allowedHosts">
+  <input type="text" name="path" placeholder="Path" [(ngModel)]="formData.path">
+
+  <input type="text" name="defaultPage" placeholder="index.html" [(ngModel)]="formData.defaultPage">
+
+  <button type="submit">Submit</button>
+  <br />
 </form>
+
+<div *ngIf="submitted">
+  <h3>Submitted Data:</h3>
+  <p>Name: {{ formData.name }}</p>
+  <p>AllowedHosts: {{ formData.allowedHosts }}</p>
+  <p>Path: {{ formData.path }}</p>
+  <p>Default Page: {{ formData.defaultPage }}</p>
+</div>

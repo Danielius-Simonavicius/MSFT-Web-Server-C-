@@ -67,8 +67,8 @@ public class WorkerService : BackgroundService
 
     private void ConnectionThreadMethod(WebsiteConfigModel website, CancellationToken token)
     {
-        try
-        {
+        try 
+        { 
             IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, website.WebsitePort);
             var httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
             httpServer.Bind(endPoint);

@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { UploadWebsiteService } from 'src/services/upload-website.service';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -13,7 +14,7 @@ import { FormsModule } from '@angular/forms';
     AppRoutingModule,
     FormsModule
   ],
-  providers: [],
+  providers: [UploadWebsiteService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

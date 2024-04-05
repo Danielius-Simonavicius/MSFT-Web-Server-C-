@@ -93,7 +93,7 @@ public class WorkerService : BackgroundService
 
             SslStream sslStream = new SslStream(new NetworkStream(handler), false);
 
-            X509Certificate2 certificate = new X509Certificate2("C:\\Users\\Dorian\\Desktop\\Microsoft\\cert\\microsoftproj.pfx");
+            X509Certificate2 certificate = new X509Certificate2("C:\\Users\\Dorian\\Desktop\\Microsoft\\cert\\keystore.p12","microsoftProject");
 
             try
             {

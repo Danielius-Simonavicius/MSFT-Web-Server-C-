@@ -10,6 +10,10 @@ using Microsoft.Extensions.Options;
 using Microsoft.VisualBasic.CompilerServices;
 using WebServer.Models;
 using WebServer.Services;
+using System;
+using System.Net.Security;
+using System.Runtime.ConstrainedExecution;
+using System.Security.Cryptography.X509Certificates;
 
 namespace WebServer;
 
@@ -85,9 +89,23 @@ public class WorkerService : BackgroundService
     {
         while (!token.IsCancellationRequested)
         {
+            var handler = await httpServer.AcceptAsync(token);
+
+            SslStream sslStream = new SslStream(new NetworkStream(handler), false);
+
+            X509Certificate2 certificate = new X509Certificate2("C:\\Users\\Dorian\\Desktop\\Microsoft\\cert\\microsoftproj.pfx");
+
+            try
+            {
+                sslStream.AuthenticateAsServerAsync(certificate, false, System.Security.Authentication.SslProtocols.Tls12, false).Wait();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"SSL/TLS handshake failed: {ex.Message}");
+                continue;
+            }
             var data = "";
             var bytes = new byte[1_024];
-            var handler = await httpServer.AcceptAsync(token);
 
             while (!token.IsCancellationRequested)
             {

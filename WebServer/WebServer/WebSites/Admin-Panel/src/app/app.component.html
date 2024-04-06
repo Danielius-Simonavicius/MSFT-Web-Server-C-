@@ -1,15 +1,22 @@
-<form #websiteUpload="ngForm" (ngSubmit)="onSubmit()" novalidate>
+<form class = "uploadForm" #websiteUpload="ngForm" (ngSubmit)="onSubmit()" novalidate>
+  <!-- <div class = "uploadForm"></div> -->
   <input type="text" name="name" placeholder="name" [(ngModel)]="formData.name">
   <input type="text" name="allowedHosts" placeholder="allowedHosts" [(ngModel)]="formData.allowedHosts">
   <input type="text" name="path" placeholder="Path" [(ngModel)]="formData.path">
-
   <input type="text" name="defaultPage" placeholder="index.html" [(ngModel)]="formData.defaultPage">
-  <input type="file" name="folder" placeholder="folder" [(ngModel)]="formData.folder">
+  <!-- <input type="file" (change)="onFolderSelected($event)" webkitdirectory multiple /> -->
+  <input type="file" name="folder" placeholder="folder" [(ngModel)]="formData.folder" multiple >
   <button type="submit">Submit</button>
   <br />
 </form>
 
+
 <div *ngIf="submitted">
+
+  <!-- <div class="progress">
+    <mat-progress-bar mode="indeterminate" value = "uploadProgress"></mat-progress-bar>
+  </div> -->
+
   <h3>Submitted Data:</h3>
   <p>Name: {{ formData.name }}</p>
   <p>AllowedHosts: {{ formData.allowedHosts }}</p>

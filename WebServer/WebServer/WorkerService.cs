@@ -23,7 +23,7 @@ public class WorkerService : BackgroundService
 
     private readonly IHttpRequestParser _parser;
 
-    public WorkerService(ILogger<WorkerService> logger, 
+    public WorkerService(ILogger<WorkerService> logger,
         IHttpRequestParser parser, IOptions<ServerConfigModel> config)
     {
         _config = config.Value;
@@ -39,22 +39,22 @@ public class WorkerService : BackgroundService
 
         foreach (var website in websites)
         {
-            _thread = new Thread(() => ConnectionThreadMethod(website,stoppingToken));
+            _thread = new Thread(() => ConnectionThreadMethod(website, stoppingToken));
             _thread.Start();
         }
     }
-    
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await Task.Yield();
         StartServer(stoppingToken);
         while (!stoppingToken.IsCancellationRequested)
         {
-            
             if (_requestsQueue.TryDequeue(out var requestModel) && requestModel.Client != null)
             {
                 var handler = requestModel.Client;
-                var hostParts = requestModel.Host.Split(":"); //hostParts = localhost:8085 (trying to find port e.g. "8085")
+                var hostParts =
+                    requestModel.Host.Split(":"); //hostParts = localhost:8085 (trying to find port e.g. "8085")
                 int port = IntegerType.FromString(hostParts[1]);
                 await handler.SendToAsync(GetResponse(requestModel,
                     _config.Websites.First((x) => x.WebsitePort == port)), handler.RemoteEndPoint!, stoppingToken);
@@ -67,15 +67,15 @@ public class WorkerService : BackgroundService
 
     private void ConnectionThreadMethod(WebsiteConfigModel website, CancellationToken token)
     {
-        try 
-        { 
+        try
+        {
             IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, website.WebsitePort);
             var httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
             httpServer.Bind(endPoint);
             httpServer.Listen(100);
             _ = StartListeningForData(httpServer, token);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Console.WriteLine($"{website.Path} Server could not start: {ex.Message}");
         }
@@ -100,8 +100,8 @@ public class WorkerService : BackgroundService
                     break;
                 }
             }
-            
-            
+
+
             LogRequestData(data);
             var request = _parser.ParseHttpRequest(data);
             request.Client = handler;
@@ -111,7 +111,7 @@ public class WorkerService : BackgroundService
             data = string.Empty;
         }
     }
-    
+
     private byte[] GetResponse(HttpRequestModel requestModel, WebsiteConfigModel website)
     {
         string statusCode = "200 OK";
@@ -129,12 +129,12 @@ public class WorkerService : BackgroundService
         {
             fileName = fileName.Substring(1);
         }
-        
-        
+
+
         var rootFolder = _config.RootFolder;
 
         var requestedFile = Path.Combine(rootFolder, webSite, fileName);
-        
+
         if (methodType.Equals("GET")) // Do we sort methods in here like this? one after the other?
         {
             // put logic in here
@@ -146,7 +146,7 @@ public class WorkerService : BackgroundService
                 $"HTTP/1.1 {statusCode}\r\n" +
                 "Server: Microsoft_web_server\r\n" +
                 $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n\r\n";
-        
+
             var responseData = Encoding.ASCII.GetBytes(responseHeader);
             return responseData.ToArray();
         }
@@ -154,32 +154,31 @@ public class WorkerService : BackgroundService
         {
             return OptionsResponse(website);
         }
-        
-        
+
+
         // File doesn't exist, return 404 Not Found
         if (!File.Exists(requestedFile))
         {
             Console.WriteLine($"File not found: {requestedFile}");
-            return NotFound404(website,statusCode);
+            return NotFound404(website, statusCode);
         }
-        
-        
+
+
         var file = File.ReadAllBytes(requestedFile);
-        
-        
-        //TODO: is there better way to detect??
+
+
         string contentType = FindContentType(requestedFile);
-        
+
         String resHeader =
             $"HTTP/1.1 {statusCode}\r\n" +
             "Server: Microsoft_web_server\r\n" +
             $"Content-Type: {contentType}; charset=UTF-8\r\n" +
             $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n\r\n";
-        
-       var resData = Encoding.ASCII.GetBytes(resHeader).Concat(file);
-        return resData.ToArray();
 
+        var resData = Encoding.ASCII.GetBytes(resHeader).Concat(file);
+        return resData.ToArray();
     }
+
     private byte[] OptionsResponse(WebsiteConfigModel website)
     {
         string statusCode = "200 OK";
@@ -189,35 +188,42 @@ public class WorkerService : BackgroundService
             "Allow: GET, POST, OPTIONS\r\n" +
             "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n" +
             "Access-Control-Allow-Headers: Content-Type\r\n" +
-            $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n" + // Allow requests from any origin
+            $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n" + 
             "\r\n";
-    
+
         var responseData = Encoding.ASCII.GetBytes(responseHeader);
         return responseData;
     }
-    public static string FindContentType(string requestedFile) =>
-        requestedFile.EndsWith(".js") ? "text/javascript" :
-        requestedFile.EndsWith(".css") ? "text/css" :
-        "text/html";
-    
+
+    public static string FindContentType(string requestedFile)
+    {
+        switch (Path.GetExtension(requestedFile).ToLowerInvariant())
+        {
+            case ".js":
+                return "text/javascript";
+            case ".css":
+                return "text/css";
+            default:
+                return "text/html";
+        }
+    }
 
 
-
-    public byte[] NotFound404(WebsiteConfigModel website,string statusCode)
+    public byte[] NotFound404(WebsiteConfigModel website, string statusCode)
     {
         statusCode = "404 Not found";
         String responseHeader =
             $"HTTP/1.1 {statusCode}\r\n" +
             "Server: Microsoft_web_server\r\n" +
             $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n\r\n";
-        
+
         var responseData = Encoding.ASCII.GetBytes(responseHeader);
         return responseData.ToArray();
     }
-   
+
 
     private void LogRequestData(string requestData)
-    { 
+    {
         _logger.LogInformation($"\n{requestData}");
     }
 }

@@ -93,11 +93,12 @@ public class WorkerService : BackgroundService
 
             SslStream sslStream = new SslStream(new NetworkStream(handler), false);
 
-            X509Certificate2 certificate = new X509Certificate2("D:\\MicrosoftProj\\MSFT-Web-Server\\WebServer\\WebServer\\Files\\localhost_pfx.pfx","microsoftProject");
+            
+            X509Certificate2 certificate = new X509Certificate2("/Users/danieljr/Desktop/Projects/MSFT-Web-Server-C-/WebServer/WebServer/certificates/microsoftproj.pfx","microsoftProject");
 
             try
             {
-                sslStream.AuthenticateAsServerAsync(certificate, false, System.Security.Authentication.SslProtocols.Tls12, false).Wait();
+                await sslStream.AuthenticateAsServerAsync(certificate, false, System.Security.Authentication.SslProtocols.Tls12, false);
             }
             catch (Exception ex)
             {

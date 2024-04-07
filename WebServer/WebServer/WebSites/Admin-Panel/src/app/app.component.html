@@ -1,15 +1,23 @@
-<form class = "uploadForm" #websiteUpload="ngForm" (ngSubmit)="onSubmit()" novalidate>
-  <!-- <div class = "uploadForm"></div> -->
-  <input type="text" name="name" placeholder="name" [(ngModel)]="formData.name">
-  <input type="text" name="allowedHosts" placeholder="allowedHosts" [(ngModel)]="formData.allowedHosts">
-  <input type="text" name="path" placeholder="Path" [(ngModel)]="formData.path">
-  <input type="text" name="defaultPage" placeholder="index.html" [(ngModel)]="formData.defaultPage">
-  <!-- <input type="file" (change)="onFolderSelected($event)" webkitdirectory multiple /> -->
-  <input type="file" name="folder" placeholder="folder" [(ngModel)]="formData.folder" multiple >
-  <button type="submit">Submit</button>
+<h2 class="content-block">Admin Panel</h2>
+<form class = "uploadForm" #websiteUpload="ngForm" (ngSubmit)="onSubmit()" novalidate >
+
+  <!-- <input type="text" name="websiteName" placeholder="Name of Website" [(ngModel)]="dataFields.websiteName"> -->
+  <input type="text" name="allowedHosts" placeholder="AllowedHosts" [(ngModel)]="dataFields.allowedHosts">
+  <input type="text" name="path" placeholder="Path" [(ngModel)]="dataFields.path">
+  <input type="text" name="defaultPage" placeholder="index.html"[(ngModel)]="dataFields.defaultPage">
+
+  <input type="file" accept=".zip,.rar,.7zip" name="folder" placeholder="folder" (change)="onFolderSelected($event)" name="folder">
+  <button type="submit">Upload </button >
   <br />
 </form>
 
+<!-- <div class = dropzone>
+  <input type="file" #fileDropRef id = "fileDropRef" multiple (change)="onFolderSelected($event)"/>
+  <img src = "assets/img/dnd/ic-upload-file.svg" alt="">
+  <h3>Drag and drop folder here</h3>
+  <h3>or</h3>
+  <label for="fileDropRef">Browse for file</label>
+</div> -->
 
 <div *ngIf="submitted">
 
@@ -18,8 +26,9 @@
   </div> -->
 
   <h3>Submitted Data:</h3>
-  <p>Name: {{ formData.name }}</p>
+  {{websiteUpload.value | json }}
+  <!-- <p>Name: {{ formData.name }}</p>
   <p>AllowedHosts: {{ formData.allowedHosts }}</p>
   <p>Path: {{ formData.path }}</p>
-  <p>Default Page: {{ formData.defaultPage }}</p>
+  <p>Default Page: {{ formData.defaultPage }}</p> -->
 </div>

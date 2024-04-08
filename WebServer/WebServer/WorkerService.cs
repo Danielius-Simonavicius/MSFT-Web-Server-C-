@@ -12,8 +12,11 @@ using WebServer.Models;
 using WebServer.Services;
 using System;
 using System.Net.Security;
+using System.Security.Cryptography;
+using System;
 using System.Runtime.ConstrainedExecution;
 using System.Security.Cryptography.X509Certificates;
+using System.IO;
 
 namespace WebServer;
 
@@ -76,29 +79,58 @@ public class WorkerService : BackgroundService
             IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, website.WebsitePort);
             var httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
             httpServer.Bind(endPoint);
-            httpServer.Listen(100);
-            _ = StartListeningForData(httpServer, token);
+            //httpServer.Listen(100);
+            TcpListener TCPListener = new TcpListener(endPoint);
+            while (true)
+            {
+                //TcpClient client = await TCPListener.AcceptTcpClientAsync();
+                //_ = ProcessClientAsync(client);
+            }
+            //_ = StartListeningForData(httpServer, token);
+            //var handler = new HttpClientHandler();
+
         }
         catch(Exception ex)
         {
             Console.WriteLine($"{website.Path} Server could not start: {ex.Message}");
         }
     }
+    
+    
+    private async Task ProcessClientAsync(TcpClient client)
+    {   
+        X509Certificate2 serverCertificate = new X509Certificate2("D:\\MicrosoftProj\\MSFT-Web-Server\\WebServer\\WebServer\\Files\\MSFTServer.pfx","microsoftProject");
 
+        using (SslStream sslStream = new SslStream(client.GetStream(), false))
+        {
+            
+            
+                await sslStream.AuthenticateAsServerAsync(serverCertificate, false, System.Security.Authentication.SslProtocols.Tls12, false);
+                Console.WriteLine("Server authenticated");
+                
+                // Proceed with secure communication
+            
+            /*catch (AuthenticationException e)
+            {
+                Console.WriteLine($"Server authentication failed: {e.Message}");
+                // Handle authentication failure
+            }*/
+        }
+    }
     private async Task StartListeningForData(Socket httpServer, CancellationToken token)
     {
         while (!token.IsCancellationRequested)
-        {
+        {   
+            X509Certificate2 serverCertificate = new X509Certificate2("D:\\MicrosoftProj\\MSFT-Web-Server\\WebServer\\WebServer\\Files\\MSFTServer.pfx","microsoftProject");
+            //X509Certificate2 clientCertificate = new X509Certificate2("D:\\MicrosoftProj\\MSFT-Web-Server\\WebServer\\WebServer\\Files\\clientca+key.pfx","microsoftProject");
+            //handler.ClientCertificates.Add(clientCertificate );
             var handler = await httpServer.AcceptAsync(token);
+            //X509Certificate2 cert = GetCertificateFromStore("CN=CERT_SIGN_TEST_CERT");
 
             SslStream sslStream = new SslStream(new NetworkStream(handler), false);
-
-            
-            X509Certificate2 certificate = new X509Certificate2("/Users/danieljr/Desktop/Projects/MSFT-Web-Server-C-/WebServer/WebServer/certificates/microsoftproj.pfx","microsoftProject");
-
             try
             {
-                await sslStream.AuthenticateAsServerAsync(certificate, false, System.Security.Authentication.SslProtocols.Tls12, false);
+                await sslStream.AuthenticateAsServerAsync(serverCertificate, false, System.Security.Authentication.SslProtocols.Tls12, false);
             }
             catch (Exception ex)
             {

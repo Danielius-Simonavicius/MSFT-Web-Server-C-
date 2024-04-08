@@ -16,7 +16,7 @@ using System.Security.Cryptography;
 using System;
 using System.Runtime.ConstrainedExecution;
 using System.Security.Cryptography.X509Certificates;
-using System.IO;
+using System.Threading.Tasks;
 
 namespace WebServer;
 
@@ -72,19 +72,20 @@ public class WorkerService : BackgroundService
         }
     }
 
-    private void ConnectionThreadMethod(WebsiteConfigModel website, CancellationToken token)
+    private async void ConnectionThreadMethod(WebsiteConfigModel website, CancellationToken token)
     {
         try
         {
-            IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, website.WebsitePort);
-            var httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
-            httpServer.Bind(endPoint);
+            IPEndPoint endPoint = new IPEndPoint(IPAddress.Loopback, website.WebsitePort);
+            //var httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            //httpServer.Bind(endPoint);
             //httpServer.Listen(100);
             TcpListener TCPListener = new TcpListener(endPoint);
+            TCPListener.Start();
             while (true)
             {
-                //TcpClient client = await TCPListener.AcceptTcpClientAsync();
-                //_ = ProcessClientAsync(client);
+                TcpClient client = await TCPListener.AcceptTcpClientAsync();
+                //_ = ProcessClientAsync(client,TCPListener,token);
             }
             //_ = StartListeningForData(httpServer, token);
             //var handler = new HttpClientHandler();
@@ -97,7 +98,7 @@ public class WorkerService : BackgroundService
     }
     
     
-    private async Task ProcessClientAsync(TcpClient client)
+    private async Task ProcessClientAsync(TcpClient client, Socket httpServer, CancellationToken token)
     {   
         X509Certificate2 serverCertificate = new X509Certificate2("D:\\MicrosoftProj\\MSFT-Web-Server\\WebServer\\WebServer\\Files\\MSFTServer.pfx","microsoftProject");
 
@@ -107,6 +108,8 @@ public class WorkerService : BackgroundService
             
                 await sslStream.AuthenticateAsServerAsync(serverCertificate, false, System.Security.Authentication.SslProtocols.Tls12, false);
                 Console.WriteLine("Server authenticated");
+                _ = StartListeningForData(httpServer, token, sslStream);
+                
                 
                 // Proceed with secure communication
             
@@ -117,50 +120,63 @@ public class WorkerService : BackgroundService
             }*/
         }
     }
-    private async Task StartListeningForData(Socket httpServer, CancellationToken token)
+    private async Task StartListeningForData(Socket httpServer, CancellationToken token, SslStream sslStream)
     {
-        while (!token.IsCancellationRequested)
-        {   
-            X509Certificate2 serverCertificate = new X509Certificate2("D:\\MicrosoftProj\\MSFT-Web-Server\\WebServer\\WebServer\\Files\\MSFTServer.pfx","microsoftProject");
+            //X509Certificate2 serverCertificate = new X509Certificate2("D:\\MicrosoftProj\\MSFT-Web-Server\\WebServer\\WebServer\\Files\\MSFTServer.pfx","microsoftProject");
             //X509Certificate2 clientCertificate = new X509Certificate2("D:\\MicrosoftProj\\MSFT-Web-Server\\WebServer\\WebServer\\Files\\clientca+key.pfx","microsoftProject");
             //handler.ClientCertificates.Add(clientCertificate );
-            var handler = await httpServer.AcceptAsync(token);
+            //var handler = await httpServer.AcceptAsync(token);
             //X509Certificate2 cert = GetCertificateFromStore("CN=CERT_SIGN_TEST_CERT");
 
-            SslStream sslStream = new SslStream(new NetworkStream(handler), false);
-            try
-            {
-                await sslStream.AuthenticateAsServerAsync(serverCertificate, false, System.Security.Authentication.SslProtocols.Tls12, false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"SSL/TLS handshake failed: {ex.Message}");
-                continue;
-            }
-            var data = "";
-            var bytes = new byte[1_024];
-
+            //SslStream sslStream = new SslStream(new NetworkStream(handler), false);
             while (!token.IsCancellationRequested)
             {
-                var received = await handler.ReceiveAsync(bytes, token);
-                var partialData = Encoding.ASCII.GetString(bytes, 0, received);
-                data += partialData;
+                var handler = await httpServer.AcceptAsync(token);
 
-                if (data.Contains("\r\n"))
+                //using (SslStream sslStream = new SslStream(new NetworkStream(handler), false))
                 {
-                    break;
+                    try
+                    {
+                        //await sslStream.AuthenticateAsServerAsync(serverCertificate, false, SslProtocols.Tls12, false);
+                        //Console.WriteLine("Server authenticated");
+
+                        // Proceed with secure communication
+                        byte[] buffer = new byte[1024];
+                        int bytesRead;
+                        var data = "";
+
+                        while (!token.IsCancellationRequested)
+                        {
+                            bytesRead = await sslStream.ReadAsync(buffer, 0, buffer.Length, token);
+                            if (bytesRead == 0)
+                            {
+                                // No more data to read, exit the loop
+                                break;
+                            }
+
+                            string partialData = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                            data += partialData;
+
+                            if (data.Contains("\r\n"))
+                            {
+                                // End of HTTP request detected, process the request
+                                LogRequestData(data);
+                                var request = _parser.ParseHttpRequest(data);
+                                request.Client = handler;
+                                _requestsQueue.Enqueue(request);
+
+                                // Reset data for next request
+                                data = string.Empty;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"SSL/TLS handshake failed: {ex.Message}");
+                        continue;
+                    }
                 }
             }
-            
-            
-            LogRequestData(data);
-            var request = _parser.ParseHttpRequest(data);
-            request.Client = handler;
-            _requestsQueue.Enqueue(request);
-
-
-            data = string.Empty;
-        }
     }
     
     private byte[] GetResponse(HttpRequestModel requestModel, WebsiteConfigModel website)

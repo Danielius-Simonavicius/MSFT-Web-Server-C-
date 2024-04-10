@@ -73,7 +73,7 @@ public class WorkerService : BackgroundService
         }
     }
 
-    private async void ConnectionThreadMethod(WebsiteConfigModel website, CancellationToken token)
+    private async Task ConnectionThreadMethod(WebsiteConfigModel website, CancellationToken token)
     {
         try
         {
@@ -105,8 +105,6 @@ public class WorkerService : BackgroundService
 
         using (SslStream sslStream = new SslStream(client.GetStream(), false))
         {
-            
-            
             try
             {
                 await sslStream.AuthenticateAsServerAsync(serverCertificate, false, SslProtocols.Tls12, false);
@@ -116,7 +114,29 @@ public class WorkerService : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError($"SSL/TLS handshake failed: {ex.Message}");
+                
+                // Optionally, you can handle specific exceptions and provide more detailed error messages
+                if (ex is AuthenticationException authEx)
+                {
+                    // Log the authentication failure
+                    _logger.LogError($"Authentication failed: {authEx.Message}");
+                }
+                else if (ex is IOException ioEx)
+                {
+                    // Log I/O related errors
+                    _logger.LogError($"I/O error: {ioEx.Message}");
+                }
+                else
+                {
+                    // Log other types of exceptions
+                    _logger.LogError($"An error occurred: {ex.Message}");
+                }
+
+                // Optionally, you can rethrow the exception or handle it gracefully based on your application's requirements
+                throw;
             }
+        }
+    }
                 
                 
                 // Proceed with secure communication
@@ -126,8 +146,8 @@ public class WorkerService : BackgroundService
                 Console.WriteLine($"Server authentication failed: {e.Message}");
                 // Handle authentication failure
             }*/
-        }
-    }
+        
+    
     private async Task StartListeningForData(SslStream sslStream, CancellationToken token)
     {
             //X509Certificate2 serverCertificate = new X509Certificate2("D:\\MicrosoftProj\\MSFT-Web-Server\\WebServer\\WebServer\\Files\\MSFTServer.pfx","microsoftProject");
@@ -152,7 +172,7 @@ public class WorkerService : BackgroundService
                         break;
                     }
 
-                    string partialData = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+                    string partialData = Encoding.UTF8.GetString(buffer, 0, bytesRead);
                     data += partialData;
 
                     if (data.Contains("\r\n"))

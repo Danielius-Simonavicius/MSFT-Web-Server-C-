@@ -183,6 +183,7 @@ public class WorkerService : BackgroundService
                 // End of HTTP request detected, process the request
                 LogRequestData(data);
                 var request = _parser.ParseHttpRequest(data);
+                //request.Client = handlerTT;
                 // Since you're not sending responses, you don't need to set request.Client
                 _requestsQueue.Enqueue(request);
 

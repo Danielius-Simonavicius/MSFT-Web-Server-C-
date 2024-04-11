@@ -177,15 +177,16 @@ public class WorkerService : BackgroundService
 
                     if (data.Contains("\r\n"))
                     {
-                        // End of HTTP request detected, process the request
-                        LogRequestData(data);
-                        var request = _parser.ParseHttpRequest(data);
-                        // Since you're not sending responses, you don't need to set request.Client
-                        _requestsQueue.Enqueue(request);
-
-                        // Reset data for next request
-                        data = string.Empty;
+                        break;
                     }
+                    // End of HTTP request detected, process the request
+                    LogRequestData(data);
+                    var request = _parser.ParseHttpRequest(data);
+                    // Since you're not sending responses, you don't need to set request.Client
+                    _requestsQueue.Enqueue(request);
+
+                    // Reset data for next request
+                    data = string.Empty;
                 }
             }
             catch (Exception ex)

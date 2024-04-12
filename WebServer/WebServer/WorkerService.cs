@@ -55,9 +55,28 @@ public class WorkerService : BackgroundService
                 var hostParts =
                     requestModel.Host.Split(":"); //hostParts = localhost:8085 (trying to find port e.g. "8085")
                 int port = IntegerType.FromString(hostParts[1]);
-                await handler.SendToAsync(GetResponse(requestModel,
-                    _config.Websites.First((x) => x.WebsitePort == port)), handler.RemoteEndPoint!, stoppingToken);
-                handler.Close();
+
+                try
+                {
+                    byte[] requestData =
+                        GetResponse(requestModel, _config.Websites.First((x) => x.WebsitePort == port));
+                    await handler.WriteAsync(requestData, 0, requestData.Length, stoppingToken);
+                    await handler.FlushAsync(stoppingToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Error processing client request: {ex.Message}");
+                    // Optionally, handle the error or log it
+                }
+                finally
+                {
+                    // Close the handler
+                    handler.Close();
+                }
+
+                // await handler.SendToAsync(GetResponse(requestModel,
+                //     _config.Websites.First((x) => x.WebsitePort == port)), handler.RemoteEndPoint!, stoppingToken);
+                // handler.Close();
             }
 
             Thread.Sleep(100);
@@ -157,7 +176,7 @@ public class WorkerService : BackgroundService
                 // End of HTTP request detected, process the request
                 LogRequestData(data);
                 var request = _parser.ParseHttpRequest(data);
-                //request.Client = handlerTT;
+                request.Client = sslStream;
                 // Since you're not sending responses, you don't need to set request.Client
                 _requestsQueue.Enqueue(request);
 

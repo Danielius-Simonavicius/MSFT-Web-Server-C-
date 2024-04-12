@@ -217,10 +217,20 @@ public class WorkerService : BackgroundService
         {
             // put logic in here
         }
-
-        if (methodType.Equals("POST"))
+        else if (methodType.Equals("POST") && fileName.Equals("upload"))
         {
-            //put logic in here
+            statusCode = "200 OK";
+            String responseHeader =
+                $"HTTP/1.1 {statusCode}\r\n" +
+                "Server: Microsoft_web_server\r\n" +
+                $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n\r\n";
+
+            var responseData = Encoding.ASCII.GetBytes(responseHeader);
+            return responseData.ToArray();
+        }
+        else if (methodType.Equals("OPTIONS"))
+        {
+            return OptionsResponse(website);
         }
 
 

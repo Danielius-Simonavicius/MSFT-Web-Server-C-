@@ -1,23 +1,14 @@
 using System.Collections.Concurrent;
-using System.Diagnostics.Eventing.Reader;
 using System.Net.Sockets;
 using System.Net;
-using System.Net.WebSockets;
-using System.Reflection.Emit;
 using System.Text;
-using Microsoft.Extensions.FileSystemGlobbing.Internal.Patterns;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualBasic.CompilerServices;
 using WebServer.Models;
 using WebServer.Services;
-using System;
 using System.Net.Security;
-using System.Security.Cryptography;
-using System;
-using System.Runtime.ConstrainedExecution;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading.Tasks;
 
 namespace WebServer;
 
@@ -139,25 +130,8 @@ public class WorkerService : BackgroundService
         }
     }
 
-
-    // Proceed with secure communication
-
-    /*catch (AuthenticationException e)
-    {
-        Console.WriteLine($"Server authentication failed: {e.Message}");
-        // Handle authentication failure
-    }*/
-
-
     private async Task StartListeningForData(SslStream sslStream, CancellationToken token)
     {
-        //X509Certificate2 serverCertificate = new X509Certificate2("D:\\MicrosoftProj\\MSFT-Web-Server\\WebServer\\WebServer\\Files\\MSFTServer.pfx","microsoftProject");
-        //X509Certificate2 clientCertificate = new X509Certificate2("D:\\MicrosoftProj\\MSFT-Web-Server\\WebServer\\WebServer\\Files\\clientca+key.pfx","microsoftProject");
-        //handler.ClientCertificates.Add(clientCertificate );
-        //var handler = await httpServer.AcceptAsync(token);
-        //X509Certificate2 cert = GetCertificateFromStore("CN=CERT_SIGN_TEST_CERT");
-
-        //SslStream sslStream = new SslStream(new NetworkStream(handler), false);
         try
         {
             while (!token.IsCancellationRequested)

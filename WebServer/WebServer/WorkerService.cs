@@ -53,11 +53,8 @@ public class WorkerService : BackgroundService
             if (_requestsQueue.TryDequeue(out var requestModel) && requestModel.Client != null)
             {
                 var handler = requestModel.Client;
-                var hostParts =
-                    requestModel.Host.Split(":"); //hostParts = localhost:8085 (trying to find port e.g. "8085")
-                int port = IntegerType.FromString(hostParts[1]);
                 await handler.SendToAsync(GetResponse(requestModel,
-                    _config.Websites.First((x) => x.WebsitePort == port)), handler.RemoteEndPoint!, stoppingToken);
+                    _config.Websites.First((x) => x.WebsitePort == requestModel.RequestedPort)), handler.RemoteEndPoint!, stoppingToken);
                 handler.Close();
             }
 

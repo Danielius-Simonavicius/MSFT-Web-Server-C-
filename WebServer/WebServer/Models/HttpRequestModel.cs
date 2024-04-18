@@ -8,6 +8,8 @@ public class HttpRequestModel
     public string RequestType { get; set; } = string.Empty;
     public string Connection { get; set; } = string.Empty;
     public string Path { get; set; } = string.Empty;
+    
+    public int RequestedPort { get; set; }
 
     public Socket? Client { get; set; }
 

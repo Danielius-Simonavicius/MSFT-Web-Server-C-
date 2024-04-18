@@ -28,7 +28,11 @@ public class DefaultHttpParser : IHttpRequestParser {
         model.Host = ExtractValue(lines, "Host");
         
         string[] lineOneParts = lines[0].Split(" "); //splitting 1st line into parts EG. "GET[0], /path[1], HTTP1.1[2]" 
-        model.RequestType = lineOneParts[0]; //Request type GET PUT POST DELETE 
+        model.RequestType = lineOneParts[0]; //Request type GET PUT POST DELETE
+
+
+        model.RequestedPort = int.TryParse(model.Host.Split(':').LastOrDefault(), out int port) ? port : 0;
+        
         model.Path = lineOneParts[1];// /path/to/file
         model.Connection = ExtractValue(lines, "Connection");
 

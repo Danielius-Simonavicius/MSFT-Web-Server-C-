@@ -122,32 +122,41 @@ public class WorkerService : BackgroundService
                 Console.WriteLine("Server authenticated");
                 await StartListeningForData(sslStream, token);
             }
-            catch (Exception ex)
+            catch (AuthenticationException ex)
             {
                 _logger.LogError($"SSL/TLS handshake failed: {ex.Message}");
 
                 // Optionally, you can handle specific exceptions and provide more detailed error messages
-                if (ex is AuthenticationException authEx)
-                {
-                    // Log the authentication failure
-                    _logger.LogError($"Authentication failed: {authEx.Message}");
-                }
-                else if (ex is IOException ioEx)
-                {
-                    // Log I/O related errors
-                    _logger.LogError($"I/O error: {ioEx.Message}");
-                }
-                else
-                {
-                    // Log other types of exceptions
-                    _logger.LogError($"An error occurred: {ex.Message}");
-                }
 
-                // Optionally, you can rethrow the exception or handle it gracefully based on your application's requirements
-                throw;
+                // Log the authentication failure
+                _logger.LogError($"Authentication failed: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    _logger.LogError(ex.InnerException, null);
+                }
+            }
+
+            catch (IOException ex)
+            {
+                _logger.LogError($"I/O error: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    _logger.LogError(ex.InnerException, null);
+                }
+            }
+
+            catch (Exception ex)
+            {
+                // Log other types of exceptions
+                _logger.LogError($"An error occurred: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    _logger.LogError(ex.InnerException, null);
+                }
             }
         }
     }
+
 
     private async Task StartListeningForData(SslStream sslStream, CancellationToken token)
     {
@@ -257,6 +266,7 @@ public class WorkerService : BackgroundService
         var resData = Encoding.ASCII.GetBytes(resHeader).Concat(file);
         return resData.ToArray();
     }
+
     private byte[] OptionsResponse(WebsiteConfigModel website)
     {
         string statusCode = "200 OK";
@@ -266,7 +276,7 @@ public class WorkerService : BackgroundService
             "Allow: GET, POST, OPTIONS\r\n" +
             "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n" +
             "Access-Control-Allow-Headers: Content-Type\r\n" +
-            $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n" + 
+            $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n" +
             "\r\n";
 
         var responseData = Encoding.ASCII.GetBytes(responseHeader);

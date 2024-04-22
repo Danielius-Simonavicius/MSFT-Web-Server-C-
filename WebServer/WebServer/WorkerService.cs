@@ -54,7 +54,8 @@ public class WorkerService : BackgroundService
             {
                 var handler = requestModel.Client;
                 await handler.SendToAsync(GetResponse(requestModel,
-                    _config.Websites.First((x) => x.WebsitePort == requestModel.RequestedPort)), handler.RemoteEndPoint!, stoppingToken);
+                        _config.Websites.First((x) => x.WebsitePort == requestModel.RequestedPort)),
+                    handler.RemoteEndPoint!, stoppingToken);
                 handler.Close();
             }
 
@@ -83,23 +84,26 @@ public class WorkerService : BackgroundService
         while (!token.IsCancellationRequested)
         {
             var data = "";
-            var bytes = new byte[1_024];
+            var bytes = new byte[102400];
+            var totalReceivedBytes = 0;
             var handler = await httpServer.AcceptAsync(token);
-
-            while (!token.IsCancellationRequested)
+            var expectedBytes = 92844350;
+            while (!token.IsCancellationRequested
+                   && (totalReceivedBytes <= expectedBytes))
             {
                 var received = await handler.ReceiveAsync(bytes, token);
+                totalReceivedBytes += received;
                 var partialData = Encoding.ASCII.GetString(bytes, 0, received);
                 data += partialData;
-
-                if (data.Contains("\r\n"))
-                {
-                    break;
-                }
+                _logger.LogInformation($"Total MB received: {totalReceivedBytes / (1024 * 1024)}");
+                // if (data.Contains("\r\n"))
+                // {
+                //     break;
+                // }
             }
 
 
-            LogRequestData(data);
+            //LogRequestData(data);
             var request = _parser.ParseHttpRequest(data);
             request.Client = handler;
             _requestsQueue.Enqueue(request);
@@ -140,18 +144,17 @@ public class WorkerService : BackgroundService
         {
             var filenamePair = requestModel.Headers.FirstOrDefault(pair => pair.Key == "filename");
             var filename = filenamePair.Value;
-            
+
             var filePath = Path.Combine(_config.RootFolder, filename);
 
             using (var fileStream = File.Create(filePath))
             {
-              //  await request.InputStream.CopyToAsync(fileStream);
+                //  await request.InputStream.CopyToAsync(fileStream);
             }
 
             Console.WriteLine($"File '{filename}' uploaded successfully.");
 
-            
-            
+
             statusCode = "200 OK";
             String responseHeader =
                 $"HTTP/1.1 {statusCode}\r\n" +
@@ -199,7 +202,7 @@ public class WorkerService : BackgroundService
             "Allow: GET, POST, OPTIONS\r\n" +
             "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n" +
             "Access-Control-Allow-Headers: Content-Type\r\n" +
-            $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n" + 
+            $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n" +
             "\r\n";
 
         var responseData = Encoding.ASCII.GetBytes(responseHeader);

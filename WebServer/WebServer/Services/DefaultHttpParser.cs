@@ -83,50 +83,48 @@ public class DefaultHttpParser : IHttpRequestParser
             // }
 
             // Extract the zip file content to a memory stream
-            using (var memoryStream = new MemoryStream())
+            using var memoryStream = new MemoryStream();
+            // Write zip file content to memory stream
+            bool zipContentStarted = false;
+            foreach (string line in bodyLines)
             {
-                // Write zip file content to memory stream
-                bool zipContentStarted = false;
-                foreach (string line in bodyLines)
+                if (zipContentStarted)
                 {
-                    if (zipContentStarted)
-                    {
-                        byte[] bytes = Encoding.UTF8.GetBytes(line + Environment.NewLine);
-                        memoryStream.Write(bytes, 0, bytes.Length);
-                    }
-                    else if (line.StartsWith("------WebKitFormBoundary"))
-                    {
-                        zipContentStarted = true;
-                    }
+                    byte[] bytes = Encoding.UTF8.GetBytes(line);
+                    memoryStream.Write(bytes, 0, bytes.Length);
                 }
-
-                memoryStream.Seek(0, SeekOrigin.Begin);
-                
-                // bool isValidZip = IsValidZipFile(memoryStream);
-                //
-                try
+                else if (line.StartsWith("------WebKitFormBoundary"))
                 {
-                    // Extract zip file content to destination directory
-                    using (var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Read))
+                    zipContentStarted = true;
+                }
+            }
+
+            memoryStream.Seek(0, SeekOrigin.Begin);
+                
+            // bool isValidZip = IsValidZipFile(memoryStream);
+            //
+            try
+            {
+                // Extract zip file content to destination directory
+                using (var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Read))
+                {
+                    foreach (var entry in zipArchive.Entries)
                     {
-                        foreach (var entry in zipArchive.Entries)
+                        string fullPath =
+                            Path.Combine(
+                                "/Users/danieljr/Desktop/Projects/MSFT-Web-Server-C-/WebServer/WebServer/WebSites",
+                                entry.FullName);
+                        if (Path.GetFileName(fullPath) != string.Empty)
                         {
-                            string fullPath =
-                                Path.Combine(
-                                    "/Users/danieljr/Desktop/Projects/MSFT-Web-Server-C-/WebServer/WebServer/WebSites",
-                                    entry.FullName);
-                            if (Path.GetFileName(fullPath) != string.Empty)
-                            {
-                                entry.ExtractToFile(fullPath, true);
-                            }
+                            entry.ExtractToFile(fullPath, true);
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    // Log or handle the exception
-                    Console.WriteLine("Error extracting zip file: " + ex.Message);
-                }
+            }
+            catch (Exception ex)
+            {
+                // Log or handle the exception
+                Console.WriteLine("Error extracting zip file: " + ex.Message);
             }
         }
 

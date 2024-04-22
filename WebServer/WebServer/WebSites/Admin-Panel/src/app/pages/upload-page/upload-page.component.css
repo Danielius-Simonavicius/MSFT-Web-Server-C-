@@ -1,0 +1,50 @@
+.content-block {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  /* Adjust color as needed */
+  margin-bottom: 20px;
+}
+
+.uploadForm {
+  max-width: 400px;
+  /* Adjust width as needed */
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  background-color: #f9f9f9;
+}
+
+.uploadForm input[type="text"],
+.uploadForm input[type="file"],
+.uploadForm button {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-sizing: border-box;
+  font-size: 16px;
+}
+
+.uploadForm input[type="text"]:focus,
+.uploadForm input[type="file"]:focus {
+  border-color: #4CAF50;
+  outline: none;
+}
+
+.uploadForm button {
+  background-color: #4CAF50;
+  /* Green background color */
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.uploadForm button:hover {
+  background-color: #45a049;
+  /* Darker green on hover */
+}

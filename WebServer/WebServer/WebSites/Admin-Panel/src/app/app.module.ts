@@ -6,11 +6,12 @@ import { AppComponent } from './app.component';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import {MatProgressBarModule} from '@angular/material/progress-bar';
+import { UploadPageComponent } from './pages/upload-page/upload-page.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    UploadPageComponent
   ],
   imports: [
     BrowserModule,
@@ -18,7 +19,6 @@ import {MatProgressBarModule} from '@angular/material/progress-bar';
     FormsModule,
     HttpClientModule,
     BrowserAnimationsModule,
-    MatProgressBarModule
   ],
   providers: [UploadWebsiteService],
   bootstrap: [AppComponent]

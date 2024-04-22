@@ -132,12 +132,26 @@ public class WorkerService : BackgroundService
 
         var requestedFile = Path.Combine(rootFolder, webSite, fileName);
 
-        if (methodType.Equals("GET")) // Do we sort methods in here like this? one after the other?
+        if (methodType.Equals("GET"))
         {
             // put logic in here
         }
         else if (methodType.Equals("POST") && fileName.Equals("upload"))
         {
+            var filenamePair = requestModel.Headers.FirstOrDefault(pair => pair.Key == "filename");
+            var filename = filenamePair.Value;
+            
+            var filePath = Path.Combine(_config.RootFolder, filename);
+
+            using (var fileStream = File.Create(filePath))
+            {
+              //  await request.InputStream.CopyToAsync(fileStream);
+            }
+
+            Console.WriteLine($"File '{filename}' uploaded successfully.");
+
+            
+            
             statusCode = "200 OK";
             String responseHeader =
                 $"HTTP/1.1 {statusCode}\r\n" +

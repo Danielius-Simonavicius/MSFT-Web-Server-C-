@@ -10,6 +10,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.VisualBasic.CompilerServices;
 using WebServer.Models;
 using WebServer.Services;
+using WebServer.WebSites;
 
 namespace WebServer;
 
@@ -18,6 +19,7 @@ public class WorkerService : BackgroundService
     private readonly ServerConfigModel _config;
     private readonly ILogger<WorkerService> _logger;
     private Thread _thread = null!;
+    private WebsiteParser _fileParser = new WebsiteParser();
 
     private readonly ConcurrentQueue<HttpRequestModel> _requestsQueue = new();
 
@@ -79,38 +81,170 @@ public class WorkerService : BackgroundService
         }
     }
 
+
+    // private async Task StartListeningForData(Socket httpServer, CancellationToken token)
+    // {
+    //     try
+    //     {
+    //         while (!token.IsCancellationRequested)
+    //         {
+    //             // Accept incoming connection asynchronously
+    //             Socket handler = await httpServer.AcceptAsync();
+    //
+    //             // Start processing the received data asynchronously
+    //             _ = ProcessDataAsync(handler, token);
+    //         }
+    //     }
+    //     catch (OperationCanceledException)
+    //     {
+    //         // Handle cancellation gracefully
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         // Handle other exceptions
+    //         Console.WriteLine($"An error occurred: {ex.Message}");
+    //     }
+    //     finally
+    //     {
+    //         // Clean up resources
+    //         httpServer.Close();
+    //     }
+    //     
+    // }
+    private async Task<byte[]> ProcessDataAsync(Socket handler, CancellationToken token)
+    {
+        // Create a MemoryStream to store received data
+        using (MemoryStream memoryStream = new MemoryStream())
+        {
+            try
+            {
+                // Create a buffer to store received data
+                byte[] buffer = new byte[1024 ^ 2];
+                int bytesRead;
+
+                while (!token.IsCancellationRequested)
+                {
+                    // Receive data asynchronously
+                    bytesRead = await handler.ReceiveAsync(buffer, SocketFlags.None, token);
+
+                    // Check if the connection was closed by the client
+                    if (bytesRead == 0)
+                    {
+                        break;
+                    }
+
+                    // Write received bytes to the MemoryStream
+                    memoryStream.Write(buffer, 0, bytesRead);
+                }
+
+                // Return the accumulated bytes
+                return memoryStream.ToArray();
+            }
+            catch (OperationCanceledException)
+            {
+                // Handle cancellation gracefully
+                return null; // or throw if desired
+            }
+            catch (Exception ex)
+            {
+                // Handle other exceptions
+                Console.WriteLine($"An error occurred while processing data: {ex.Message}");
+                return null; // or throw if desired
+            }
+            finally
+            {
+                // Close the socket
+                handler.Close();
+            }
+        }
+    }
+
+
     private async Task StartListeningForData(Socket httpServer, CancellationToken token)
     {
         while (!token.IsCancellationRequested)
         {
             var data = "";
-            var bytes = new byte[102400];
-            var totalReceivedBytes = 0;
+            var bytes = new byte[1_024]; //102400
             var handler = await httpServer.AcceptAsync(token);
-            var expectedBytes = 92844350;
-            while (!token.IsCancellationRequested
-                   && (totalReceivedBytes <= expectedBytes))
+            var totalReceivedBytes = 0;
+
+            while (!token.IsCancellationRequested)
             {
                 var received = await handler.ReceiveAsync(bytes, token);
                 totalReceivedBytes += received;
+
                 var partialData = Encoding.ASCII.GetString(bytes, 0, received);
                 data += partialData;
-                _logger.LogInformation($"Total MB received: {totalReceivedBytes / (1024 * 1024)}");
-                // if (data.Contains("\r\n"))
-                // {
-                //     break;
-                // }
+                if (data.Contains("\r\n"))
+                {
+                    LogRequestData(data);
+                    break;
+                }
             }
 
-
-            //LogRequestData(data);
             var request = _parser.ParseHttpRequest(data);
+            var expectedBytes = request.ContentLength;
+
+
+            /*checks if client is uploading from-data object from front end. This will parse file bytes,
+             extract and place newly uploaded website into website directory*/
+            var fileBytes = new byte[request.ContentLength];
+
+            if (request.ContentType.StartsWith("multipart/form-data;"))
+            {
+                while (!token.IsCancellationRequested && (totalReceivedBytes <= expectedBytes))
+                {
+                    var received = await handler.ReceiveAsync(fileBytes, token);
+                    totalReceivedBytes += received;
+                    var partialData = Encoding.ASCII.GetString(fileBytes, 0, received);
+                    data += partialData;
+                    _logger.LogInformation($"Total MB received: {totalReceivedBytes / (1024 * 1024)}");
+                }
+            }
+            Array.Copy(bytes, fileBytes, bytes.Length);
+            
+            //Finding the boundary's in the byte input for the zip file
+            var match = System.Text.RegularExpressions.Regex.Match(request.ContentType,
+                @"boundary=(?<boundary>.+)");
+            string boundary = match.Success ? match.Groups["boundary"].Value.Trim() : "";
+
+            byte[] boundaryBytes = Encoding.ASCII.GetBytes("--" + boundary);
+                
+            // Find the index of the first occurrence of the starting boundary in the dataBytes array
+            var startIndex = FindBoundaryIndex(fileBytes, boundaryBytes);
+
+            // Find the index of the next occurrence of the ending boundary in the dataBytes array
+            var endIndex = FindBoundaryIndex(fileBytes, boundaryBytes,
+                startIndex + boundaryBytes.Length);
+
+            // Extract the content between the boundaries
+            var contentBetweenBoundaries = fileBytes.Skip(startIndex + boundaryBytes.Length)
+                .Take(endIndex - startIndex - boundaryBytes.Length).ToArray();
+
+            //Extracting zip file (website)
+            _fileParser.ExtractWebsiteFile(contentBetweenBoundaries);
+
             request.Client = handler;
             _requestsQueue.Enqueue(request);
 
 
             data = string.Empty;
         }
+    }
+    
+    // Define a method to find the boundary index in a byte array
+    public static int FindBoundaryIndex(byte[] data, byte[] boundary, int startIndex = 0)
+    {
+        for (var i = startIndex; i < data.Length - boundary.Length; i++)
+        {
+            var isBoundary = !boundary.Where((t, j) => data[i + j] != t).Any();
+            if (isBoundary)
+            {
+                return i;
+            }
+        }
+        return -1; // Boundary not found
     }
 
     private byte[] GetResponse(HttpRequestModel requestModel, WebsiteConfigModel website)
@@ -143,7 +277,7 @@ public class WorkerService : BackgroundService
         else if (methodType.Equals("POST") && fileName.Equals("upload"))
         {
             var filenamePair = requestModel.Headers.FirstOrDefault(pair => pair.Key == "filename");
-            var filename = filenamePair.Value;
+            var filename = requestModel.FileInfo?.FileName;
 
             var filePath = Path.Combine(_config.RootFolder, filename);
 

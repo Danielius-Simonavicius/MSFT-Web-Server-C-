@@ -202,7 +202,18 @@ public class WorkerService : BackgroundService
                     _logger.LogInformation($"Total MB received: {totalReceivedBytes / (1024 * 1024)}");
                 }
             }
-            Array.Copy(bytes, fileBytes, bytes.Length);
+
+            var listBytes = new List<byte>();
+            foreach (var b in bytes)
+            {
+                listBytes.Add(b);
+            }
+            foreach (var b in fileBytes)
+            {
+                listBytes.Add(b);
+            }
+
+            var fullArray = listBytes.ToArray();
             
             //Finding the boundary's in the byte input for the zip file
             var match = System.Text.RegularExpressions.Regex.Match(request.ContentType,
@@ -212,14 +223,14 @@ public class WorkerService : BackgroundService
             byte[] boundaryBytes = Encoding.ASCII.GetBytes("--" + boundary);
                 
             // Find the index of the first occurrence of the starting boundary in the dataBytes array
-            var startIndex = FindBoundaryIndex(fileBytes, boundaryBytes);
+            var startIndex = FindBoundaryIndex(fullArray, boundaryBytes);
 
             // Find the index of the next occurrence of the ending boundary in the dataBytes array
-            var endIndex = FindBoundaryIndex(fileBytes, boundaryBytes,
+            var endIndex = FindBoundaryIndex(fullArray, boundaryBytes,
                 startIndex + boundaryBytes.Length);
 
             // Extract the content between the boundaries
-            var contentBetweenBoundaries = fileBytes.Skip(startIndex + boundaryBytes.Length)
+            var contentBetweenBoundaries = fullArray.Skip(startIndex + boundaryBytes.Length)
                 .Take(endIndex - startIndex - boundaryBytes.Length).ToArray();
 
             //Extracting zip file (website)

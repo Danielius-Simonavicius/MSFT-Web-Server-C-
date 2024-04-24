@@ -11,6 +11,6 @@ export class UploadWebsiteService {
   constructor(private http: HttpClient) { }
 
   uploadWebsite(model: FormData): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/upload`, model);
+    return this.http.post<any>(`${environment.apiUrl}/uploadWebsite`, model);
   }
 }

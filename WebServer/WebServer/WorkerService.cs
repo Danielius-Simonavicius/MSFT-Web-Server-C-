@@ -111,53 +111,6 @@ public class WorkerService : BackgroundService
     //     }
     //     
     // }
-    private async Task<byte[]> ProcessDataAsync(Socket handler, CancellationToken token)
-    {
-        // Create a MemoryStream to store received data
-        using (MemoryStream memoryStream = new MemoryStream())
-        {
-            try
-            {
-                // Create a buffer to store received data
-                byte[] buffer = new byte[1024 ^ 2];
-                int bytesRead;
-
-                while (!token.IsCancellationRequested)
-                {
-                    // Receive data asynchronously
-                    bytesRead = await handler.ReceiveAsync(buffer, SocketFlags.None, token);
-
-                    // Check if the connection was closed by the client
-                    if (bytesRead == 0)
-                    {
-                        break;
-                    }
-
-                    // Write received bytes to the MemoryStream
-                    memoryStream.Write(buffer, 0, bytesRead);
-                }
-
-                // Return the accumulated bytes
-                return memoryStream.ToArray();
-            }
-            catch (OperationCanceledException)
-            {
-                // Handle cancellation gracefully
-                return null; // or throw if desired
-            }
-            catch (Exception ex)
-            {
-                // Handle other exceptions
-                Console.WriteLine($"An error occurred while processing data: {ex.Message}");
-                return null; // or throw if desired
-            }
-            finally
-            {
-                // Close the socket
-                handler.Close();
-            }
-        }
-    }
 
 
     private async Task StartListeningForData(Socket httpServer, CancellationToken token)
@@ -165,7 +118,7 @@ public class WorkerService : BackgroundService
         while (!token.IsCancellationRequested)
         {
             var data = "";
-            var bytes = new byte[1_024]; //102400
+            var bytes = new byte[4096]; //102400
             var handler = await httpServer.AcceptAsync(token);
             var totalReceivedBytes = 0;
 
@@ -189,6 +142,7 @@ public class WorkerService : BackgroundService
 
             /*checks if client is uploading from-data object from front end. This will parse file bytes,
              extract and place newly uploaded website into website directory*/
+            //todo var partialBytes = new byte[4096]; // Chunk size
             var fileBytes = new byte[request.ContentLength];
 
             if (request.ContentType.StartsWith("multipart/form-data;"))
@@ -237,6 +191,7 @@ public class WorkerService : BackgroundService
                 _fileParser.ExtractWebsiteFile(zipData);
 
             }
+            
             request.Client = handler;
             _requestsQueue.Enqueue(request);
 
@@ -285,21 +240,8 @@ public class WorkerService : BackgroundService
         {
             // put logic in here
         }
-        else if (methodType.Equals("POST") && fileName.Equals("upload"))
+        else if (methodType.Equals("POST") && fileName.Equals("uploadWebsite"))
         {
-            var filenamePair = requestModel.Headers.FirstOrDefault(pair => pair.Key == "filename");
-            var filename = requestModel.FileInfo?.FileName;
-
-            var filePath = Path.Combine(_config.RootFolder, filename);
-
-            using (var fileStream = File.Create(filePath))
-            {
-                //  await request.InputStream.CopyToAsync(fileStream);
-            }
-
-            Console.WriteLine($"File '{filename}' uploaded successfully.");
-
-
             statusCode = "200 OK";
             String responseHeader =
                 $"HTTP/1.1 {statusCode}\r\n" +

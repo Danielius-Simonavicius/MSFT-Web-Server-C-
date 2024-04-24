@@ -19,7 +19,7 @@ public class WorkerService : BackgroundService
     private readonly ServerConfigModel _config;
     private readonly ILogger<WorkerService> _logger;
     private Thread _thread = null!;
-    private WebsiteParser _fileParser = new WebsiteParser();
+    public readonly WebsiteParser _fileParser = new WebsiteParser();
 
     private readonly ConcurrentQueue<HttpRequestModel> _requestsQueue = new();
 
@@ -52,16 +52,23 @@ public class WorkerService : BackgroundService
         StartServer(stoppingToken);
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (_requestsQueue.TryDequeue(out var requestModel) && requestModel.Client != null)
+            try
             {
-                var handler = requestModel.Client;
-                await handler.SendToAsync(GetResponse(requestModel,
-                        _config.Websites.First((x) => x.WebsitePort == requestModel.RequestedPort)),
-                    handler.RemoteEndPoint!, stoppingToken);
-                handler.Close();
-            }
+                if (_requestsQueue.TryDequeue(out var requestModel) && requestModel.Client != null)
+                {
+                    var handler = requestModel.Client;
+                    await handler.SendToAsync(GetResponse(requestModel,
+                            _config.Websites.First((x) => x.WebsitePort == requestModel.RequestedPort)),
+                        handler.RemoteEndPoint!, stoppingToken);
+                    handler.Close();
+                }
 
-            Thread.Sleep(100);
+                Thread.Sleep(100);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError($"{ex}");
+            }
         }
     }
 
@@ -80,39 +87,7 @@ public class WorkerService : BackgroundService
             Console.WriteLine($"{website.Path} Server could not start: {ex.Message}");
         }
     }
-
-
-    // private async Task StartListeningForData(Socket httpServer, CancellationToken token)
-    // {
-    //     try
-    //     {
-    //         while (!token.IsCancellationRequested)
-    //         {
-    //             // Accept incoming connection asynchronously
-    //             Socket handler = await httpServer.AcceptAsync();
-    //
-    //             // Start processing the received data asynchronously
-    //             _ = ProcessDataAsync(handler, token);
-    //         }
-    //     }
-    //     catch (OperationCanceledException)
-    //     {
-    //         // Handle cancellation gracefully
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         // Handle other exceptions
-    //         Console.WriteLine($"An error occurred: {ex.Message}");
-    //     }
-    //     finally
-    //     {
-    //         // Clean up resources
-    //         httpServer.Close();
-    //     }
-    //     
-    // }
-
-
+    
     private async Task StartListeningForData(Socket httpServer, CancellationToken token)
     {
         while (!token.IsCancellationRequested)
@@ -136,6 +111,7 @@ public class WorkerService : BackgroundService
                 }
             }
 
+            string stest1 = data;
             var request = _parser.ParseHttpRequest(data);
             var expectedBytes = request.ContentLength;
 
@@ -155,26 +131,28 @@ public class WorkerService : BackgroundService
                     data += partialData;
                     _logger.LogInformation($"Total MB received: {totalReceivedBytes / (1024 * 1024)}");
                 }
+
                 string test = data;
                 var listBytes = new List<byte>();
                 foreach (var b in bytes)
                 {
                     listBytes.Add(b);
                 }
+
                 foreach (var b in fileBytes)
                 {
                     listBytes.Add(b);
                 }
 
                 var fullArray = listBytes.ToArray();
-            
+
                 //Finding the boundary's in the byte input for the zip file
                 var match = System.Text.RegularExpressions.Regex.Match(request.ContentType,
                     @"boundary=(?<boundary>.+)");
                 string boundary = match.Success ? match.Groups["boundary"].Value.Trim() : "";
 
                 byte[] boundaryBytes = Encoding.ASCII.GetBytes("--" + boundary);
-                
+
                 // Find the index of the first occurrence of the starting boundary in the dataBytes array
                 var startIndex = FindBoundaryIndex(fullArray, boundaryBytes);
 
@@ -187,11 +165,11 @@ public class WorkerService : BackgroundService
                     .Take(endIndex - startIndex - boundaryBytes.Length).ToArray();
 
                 //Extracting zip file (website)
-                byte[] zipData = _fileParser.ExtractBinaryData(contentBetweenBoundaries, Encoding.ASCII.GetBytes("Content-Type: application/zip\r\n\r\n"));
+                byte[] zipData = _fileParser.ExtractBinaryData(contentBetweenBoundaries,
+                    Encoding.ASCII.GetBytes("Content-Type: application/zip\r\n\r\n"));
                 _fileParser.ExtractWebsiteFile(zipData);
-
             }
-            
+
             request.Client = handler;
             _requestsQueue.Enqueue(request);
 
@@ -199,6 +177,7 @@ public class WorkerService : BackgroundService
             data = string.Empty;
         }
     }
+
     // Define a method to find the boundary index in a byte array
     public static int FindBoundaryIndex(byte[] data, byte[] boundary, int startIndex = 0)
     {
@@ -210,6 +189,7 @@ public class WorkerService : BackgroundService
                 return i;
             }
         }
+
         return -1; // Boundary not found
     }
 

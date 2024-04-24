@@ -15,7 +15,7 @@
         "Path": "XtraceLoginPage",
         "DefaultPage" : "index.html",
         "IsDefault": true,
-        "WebsitePort" : 8080
+        "WebsitePort" : 8089
       },
       {
         "AllowedHosts": "*",
@@ -33,5 +33,4 @@
       }
     ]
   }
-  
 }

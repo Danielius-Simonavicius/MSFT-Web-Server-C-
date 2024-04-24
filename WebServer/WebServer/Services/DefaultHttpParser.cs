@@ -43,7 +43,12 @@ public class DefaultHttpParser : IHttpRequestParser
         model.Path = lineOneParts[1]; // /path/to/file
         model.Connection = ExtractValue(lines, "Connection");
         model.ContentType = ExtractValue(lines, "Content-Type");
-        model.ContentLength = int.Parse(ExtractValue(lines,"Content-Length")); 
+        
+        string contentLengthAsString = (ExtractValue(lines,"Content-Length"));
+        if (contentLengthAsString != string.Empty)
+        {
+            model.ContentLength= int.Parse(ExtractValue(lines,"Content-Length")); 
+        }
 
         foreach (var line in lines)
         {

@@ -2,11 +2,25 @@
 <form class = "uploadForm" #websiteUpload="ngForm" (ngSubmit)="onSubmit()" novalidate >
 
   <!-- <input type="text" name="websiteName" placeholder="Name of Website" [(ngModel)]="dataFields.websiteName"> -->
-  <input type="text" name="allowedHosts" placeholder="AllowedHosts" [(ngModel)]="dataFields.allowedHosts">
-  <input type="text" name="path" placeholder="Path" [(ngModel)]="dataFields.path">
-  <input type="text" name="defaultPage" placeholder="index.html"[(ngModel)]="dataFields.defaultPage">
+  <input type="text" name="allowedHosts" placeholder="AllowedHosts" [(ngModel)]="dataFields.allowedHosts" required>
+  <div *ngIf="websiteUpload.submitted && websiteUpload.controls['allowedHosts'].errors?.['required']" class="error-message">
+    AllowedHosts is required.
+  </div>
 
-  <input type="file" accept=".zip,.rar,.7zip" name="folder" placeholder="folder" (change)="onFolderSelected($event)" name="folder">
+  <input type="text" name="path" placeholder="Path" [(ngModel)]="dataFields.path" required>
+  <div *ngIf="websiteUpload.submitted && websiteUpload.controls['path'].errors?.['required']" class="error-message">
+    Path is required.
+  </div>
+  
+  <input type="text" name="defaultPage" placeholder="index.html"[(ngModel)]="dataFields.defaultPage" required>
+  <div *ngIf="websiteUpload.submitted && websiteUpload.controls['defaultPage'].errors?.['required']" class="error-message">
+    Default Page is required.
+  </div>
+
+  <input type="file" accept=".zip,.rar,.7zip" name="folder" placeholder="folder" (change)="onFolderSelected($event)" name="folder" required>
+  <div *ngIf="websiteUpload.submitted && websiteUpload.controls['folder'].errors?.['required']" class="error-message">
+    Folder is required.
+  </div>
   <button type="submit">Upload </button >
   <br />
 </form>

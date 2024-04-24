@@ -201,41 +201,42 @@ public class WorkerService : BackgroundService
                     data += partialData;
                     _logger.LogInformation($"Total MB received: {totalReceivedBytes / (1024 * 1024)}");
                 }
-            }
+                string test = data;
+                var listBytes = new List<byte>();
+                foreach (var b in bytes)
+                {
+                    listBytes.Add(b);
+                }
+                foreach (var b in fileBytes)
+                {
+                    listBytes.Add(b);
+                }
 
-            var listBytes = new List<byte>();
-            foreach (var b in bytes)
-            {
-                listBytes.Add(b);
-            }
-            foreach (var b in fileBytes)
-            {
-                listBytes.Add(b);
-            }
-
-            var fullArray = listBytes.ToArray();
+                var fullArray = listBytes.ToArray();
             
-            //Finding the boundary's in the byte input for the zip file
-            var match = System.Text.RegularExpressions.Regex.Match(request.ContentType,
-                @"boundary=(?<boundary>.+)");
-            string boundary = match.Success ? match.Groups["boundary"].Value.Trim() : "";
+                //Finding the boundary's in the byte input for the zip file
+                var match = System.Text.RegularExpressions.Regex.Match(request.ContentType,
+                    @"boundary=(?<boundary>.+)");
+                string boundary = match.Success ? match.Groups["boundary"].Value.Trim() : "";
 
-            byte[] boundaryBytes = Encoding.ASCII.GetBytes("--" + boundary);
+                byte[] boundaryBytes = Encoding.ASCII.GetBytes("--" + boundary);
                 
-            // Find the index of the first occurrence of the starting boundary in the dataBytes array
-            var startIndex = FindBoundaryIndex(fullArray, boundaryBytes);
+                // Find the index of the first occurrence of the starting boundary in the dataBytes array
+                var startIndex = FindBoundaryIndex(fullArray, boundaryBytes);
 
-            // Find the index of the next occurrence of the ending boundary in the dataBytes array
-            var endIndex = FindBoundaryIndex(fullArray, boundaryBytes,
-                startIndex + boundaryBytes.Length);
+                // Find the index of the next occurrence of the ending boundary in the dataBytes array
+                var endIndex = FindBoundaryIndex(fullArray, boundaryBytes,
+                    startIndex + boundaryBytes.Length);
 
-            // Extract the content between the boundaries
-            var contentBetweenBoundaries = fullArray.Skip(startIndex + boundaryBytes.Length)
-                .Take(endIndex - startIndex - boundaryBytes.Length).ToArray();
+                // Extract the content between the boundaries
+                var contentBetweenBoundaries = fullArray.Skip(startIndex + boundaryBytes.Length)
+                    .Take(endIndex - startIndex - boundaryBytes.Length).ToArray();
 
-            //Extracting zip file (website)
-            _fileParser.ExtractWebsiteFile(contentBetweenBoundaries);
+                //Extracting zip file (website)
+                byte[] zipData = _fileParser.ExtractBinaryData(contentBetweenBoundaries, Encoding.ASCII.GetBytes("Content-Type: application/zip\r\n\r\n"));
+                _fileParser.ExtractWebsiteFile(zipData);
 
+            }
             request.Client = handler;
             _requestsQueue.Enqueue(request);
 
@@ -243,7 +244,6 @@ public class WorkerService : BackgroundService
             data = string.Empty;
         }
     }
-    
     // Define a method to find the boundary index in a byte array
     public static int FindBoundaryIndex(byte[] data, byte[] boundary, int startIndex = 0)
     {

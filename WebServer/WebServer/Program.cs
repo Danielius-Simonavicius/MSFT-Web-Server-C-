@@ -7,7 +7,7 @@ namespace WebServer
 {
     class Program
     {
-        static void Main(String[] args)
+        private static void Main(string[] args)
         {
             var builder = Host.CreateApplicationBuilder();
 
@@ -19,7 +19,7 @@ namespace WebServer
                     reloadOnChange: true) 
                 .Build();
 
-            builder.Services.AddSingleton(configuration); // Add configuration to services
+            builder.Services.AddSingleton(configuration); 
             builder.Services.Configure<ServerConfigModel>(configuration.GetSection("ServerConfig"));
             
             var host = builder.Build();

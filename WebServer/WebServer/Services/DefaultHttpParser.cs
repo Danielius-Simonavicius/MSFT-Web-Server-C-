@@ -25,7 +25,7 @@ public class DefaultHttpParser : IHttpRequestParser
     public HttpRequestModel ParseHttpRequest(string input)
     {
         string[] sections =
-            input.Split(new string[] { "\r\n\r\n" },
+            input.Split(new[] { "\r\n\r\n" },
                 StringSplitOptions.RemoveEmptyEntries); //0 header, 1 and so on is body values
         var model = new HttpRequestModel();
         //Splitting all logged data into array lines
@@ -43,34 +43,32 @@ public class DefaultHttpParser : IHttpRequestParser
         model.Path = lineOneParts[1]; // /path/to/file
         model.Connection = ExtractValue(lines, "Connection");
         model.ContentType = ExtractValue(lines, "Content-Type");
-        
-        string contentLengthAsString = (ExtractValue(lines,"Content-Length"));
+
+        var contentLengthAsString = (ExtractValue(lines, "Content-Length"));
         if (contentLengthAsString != string.Empty)
         {
-            model.ContentLength= int.Parse(ExtractValue(lines,"Content-Length")); 
+            model.ContentLength = int.Parse(ExtractValue(lines, "Content-Length"));
         }
 
         foreach (var line in lines)
         {
-            string[] parts = line.Split(':');
-            if (parts.Length == 2)
+            var parts = line.Split(':');
+            switch (parts.Length)
             {
-                model.Headers.Add(new KeyValuePair<string, string>(parts[0].Trim(), parts[1].Trim()));
-            }
-            //some headers have more : so i just added the first part[0] as the key and the rest as the values.
-            else if (parts.Length > 2)
-            {
-                string key = parts[0].Trim();
-                string value = string.Join(":", parts.Skip(1)).Trim();
-                model.Headers.Add(new KeyValuePair<string, string>(key, value));
+                case 2:
+                    model.Headers.Add(new KeyValuePair<string, string>(parts[0].Trim(), parts[1].Trim()));
+                    break;
+                //some headers have more : so i just added the first part[0] as the key and the rest as the values.
+                case > 2:
+                {
+                    var key = parts[0].Trim();
+                    var value = string.Join(":", parts.Skip(1)).Trim();
+                    model.Headers.Add(new KeyValuePair<string, string>(key, value));
+                    break;
+                }
             }
         }
 
         return model;
     }
-
-    // string zipPath = @"/Users/danieljr/Desktop/Projects/Assingment5CS230.zip";
-    // string extractPath = @"/Users/danieljr/RiderProjects/TESTING/TESTING/FILE";
-    //     
-    // System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, extractPath);
 }

@@ -34,9 +34,11 @@ export class UploadPageComponent implements OnInit{
       response => {
         console.log('Upload successful:', response);
         this.submitted = true;
+        window.location.reload();
       },
       error => {
         console.error('Error uploading:', error);
+        window.location.reload();
       }
     );
     this.submitted = true;

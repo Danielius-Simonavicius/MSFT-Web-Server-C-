@@ -34,53 +34,6 @@ public class WebsiteParser
             }
         }
     }
-
-    public byte[] ExtractBinaryData(byte[] data, byte[] contentType)
-    {
-        // Find the index of the content type in the data byte array
-        int contentTypeIndex = IndexOfSequence(data, contentType);
-
-        if (contentTypeIndex != -1)
-        {
-            // Calculate the start index of the binary data
-            int startIndex = contentTypeIndex + contentType.Length;
-
-            // Extract the binary data
-            byte[] binaryData = new byte[data.Length - startIndex];
-            Array.Copy(data, startIndex, binaryData, 0, binaryData.Length);
-            return RemoveLastTwoBytes(binaryData);
-        }
-        else
-        {
-            // Content type not found
-            return null;
-        }
-    }
-
-    // Function to find the index of a sequence of bytes in another byte array
-    public static int IndexOfSequence(byte[] source, byte[] pattern)
-    {
-        for (int i = 0; i < source.Length - pattern.Length + 1; i++)
-        {
-            bool found = true;
-            for (int j = 0; j < pattern.Length; j++)
-            {
-                if (source[i + j] != pattern[j])
-                {
-                    found = false;
-                    break;
-                }
-            }
-
-            if (found)
-            {
-                return i;
-            }
-        }
-
-        return -1; // Not found
-    }
-    
     public static byte[] RemoveLastTwoBytes(byte[] array)
     {
         if (array.Length >= 2)

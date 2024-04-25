@@ -14,22 +14,25 @@
         "AllowedHosts": "*",
         "Path": "XtraceLoginPage",
         "DefaultPage" : "index.html",
-        "IsDefault": true,
         "WebsitePort" : 8089
       },
       {
         "AllowedHosts": "*",
         "Path": "DemoSite1",
         "DefaultPage" : "index.html",
-        "IsDefault": true,
         "WebsitePort" : 8085
       },
       {
         "AllowedHosts": "*",
         "Path": "DorianWebsite",
         "DefaultPage" : "index.html",
-        "IsDefault": true,
         "WebsitePort" : 8086
+      },
+      {
+        "AllowedHosts": "*",
+        "Path": "frontend",
+        "DefaultPage" : "index.html",
+        "WebsitePort" : 9091
       }
     ]
   }

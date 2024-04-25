@@ -65,7 +65,7 @@ public class WorkerService : BackgroundService
 
                 Thread.Sleep(100);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError($"{ex}");
             }
@@ -87,13 +87,15 @@ public class WorkerService : BackgroundService
             Console.WriteLine($"{website.Path} Server could not start: {ex.Message}");
         }
     }
-    
+
     private async Task StartListeningForData(Socket httpServer, CancellationToken token)
     {
         while (!token.IsCancellationRequested)
         {
             var data = "";
-            var bytes = new byte[4096]; //102400
+            byte[] totalBytes = new byte[0];
+
+            var bytes = new byte[1024]; //102400
             var handler = await httpServer.AcceptAsync(token);
             var totalReceivedBytes = 0;
 
@@ -107,70 +109,48 @@ public class WorkerService : BackgroundService
                 if (data.Contains("\r\n"))
                 {
                     LogRequestData(data);
+                }
+                
+                // Extend totalBytes array to accommodate new data
+                Array.Resize(ref totalBytes, totalBytes.Length + received);
+                Array.Copy(bytes, 0, totalBytes, totalBytes.Length - received, received);
+
+                // Check if the received data contains a complete message
+                if (received < bytes.Length)
+                {
+                    // If the received data is less than the buffer size, assume it's the end of the message
+                    //LogRequestData(totalBytes);
                     break;
                 }
+
+                _logger.LogInformation($"Total MB received: {totalReceivedBytes / (1024 * 1024)}");
             }
+        
 
-            string stest1 = data;
+
             var request = _parser.ParseHttpRequest(data);
-            var expectedBytes = request.ContentLength;
-
-
-            /*checks if client is uploading from-data object from front end. This will parse file bytes,
-             extract and place newly uploaded website into website directory*/
-            //todo var partialBytes = new byte[4096]; // Chunk size
-            var fileBytes = new byte[request.ContentLength];
 
             if (request.ContentType.StartsWith("multipart/form-data;"))
             {
-                while (!token.IsCancellationRequested && (totalReceivedBytes <= expectedBytes))
-                {
-                    var received = await handler.ReceiveAsync(fileBytes, token);
-                    totalReceivedBytes += received;
-                    var partialData = Encoding.ASCII.GetString(fileBytes, 0, received);
-                    data += partialData;
-                    _logger.LogInformation($"Total MB received: {totalReceivedBytes / (1024 * 1024)}");
-                }
-
-                string test = data;
-                var listBytes = new List<byte>();
-                foreach (var b in bytes)
-                {
-                    listBytes.Add(b);
-                }
-
-                foreach (var b in fileBytes)
-                {
-                    listBytes.Add(b);
-                }
-
-                var fullArray = listBytes.ToArray();
-
-                //Finding the boundary's in the byte input for the zip file
                 var match = System.Text.RegularExpressions.Regex.Match(request.ContentType,
                     @"boundary=(?<boundary>.+)");
                 string boundary = match.Success ? match.Groups["boundary"].Value.Trim() : "";
 
-                byte[] boundaryBytes = Encoding.ASCII.GetBytes("--" + boundary);
+                byte[] delimiter = Encoding.ASCII.GetBytes("--" + boundary);
 
-                // Find the index of the first occurrence of the starting boundary in the dataBytes array
-                var startIndex = FindBoundaryIndex(fullArray, boundaryBytes);
 
-                // Find the index of the next occurrence of the ending boundary in the dataBytes array
-                var endIndex = FindBoundaryIndex(fullArray, boundaryBytes,
-                    startIndex + boundaryBytes.Length);
+                // Split the byte array
+                List<byte[]> parts = SplitByteArray(bytes, delimiter);
+                string[] stringArray = parts.ConvertAll(bytes => Encoding.ASCII.GetString(bytes)).ToArray();
 
-                // Extract the content between the boundaries
-                var contentBetweenBoundaries = fullArray.Skip(startIndex + boundaryBytes.Length)
-                    .Take(endIndex - startIndex - boundaryBytes.Length).ToArray();
+                // Extract file content from parts[1]
+                byte[] fileContent = ExtractFileContent(parts[0]);
+                _fileParser.ExtractWebsiteFile(fileContent);
 
-                //Extracting zip file (website)
-                byte[] zipData = _fileParser.ExtractBinaryData(contentBetweenBoundaries,
-                    Encoding.ASCII.GetBytes("Content-Type: application/zip\r\n\r\n"));
-                _fileParser.ExtractWebsiteFile(zipData);
+
+                request.Client = handler;
             }
-
-            request.Client = handler;
+            
             _requestsQueue.Enqueue(request);
 
 
@@ -178,19 +158,71 @@ public class WorkerService : BackgroundService
         }
     }
 
-    // Define a method to find the boundary index in a byte array
-    public static int FindBoundaryIndex(byte[] data, byte[] boundary, int startIndex = 0)
+    static byte[] ExtractFileContent(byte[] byteArray)
     {
-        for (var i = startIndex; i < data.Length - boundary.Length; i++)
+        string pkSignature = "PK";
+        byte[] pkBytes = Encoding.ASCII.GetBytes(pkSignature);
+        int index = IndexOf(byteArray, pkBytes, 0);
+        if (index != -1)
         {
-            var isBoundary = !boundary.Where((t, j) => data[i + j] != t).Any();
-            if (isBoundary)
+            // Return the file content byte array starting from "PK"
+            return SubArray(byteArray, index, byteArray.Length - index);
+        }
+        else
+        {
+            // Handle case when "PK" is not found
+            return null; // or throw an exception
+        }
+    }
+
+    static List<byte[]> SplitByteArray(byte[] byteArray, byte[] delimiter)
+    {
+        List<byte[]> parts = new List<byte[]>();
+        int delimiterIndex = IndexOf(byteArray, delimiter, 0);
+
+        while (delimiterIndex != -1)
+        {
+            parts.Add(SubArray(byteArray, 0, delimiterIndex));
+            byteArray = SubArray(byteArray, delimiterIndex + delimiter.Length,
+                byteArray.Length - delimiterIndex - delimiter.Length);
+            delimiterIndex = IndexOf(byteArray, delimiter, 0);
+        }
+
+        if (byteArray.Length > 0)
+        {
+            parts.Add(byteArray);
+        }
+
+        return parts;
+    }
+
+    static int IndexOf(byte[] array, byte[] pattern, int startIndex)
+    {
+        for (int i = startIndex; i <= array.Length - pattern.Length; i++)
+        {
+            int j;
+            for (j = 0; j < pattern.Length; j++)
+            {
+                if (array[i + j] != pattern[j])
+                {
+                    break;
+                }
+            }
+
+            if (j == pattern.Length)
             {
                 return i;
             }
         }
 
-        return -1; // Boundary not found
+        return -1;
+    }
+
+    static byte[] SubArray(byte[] array, int startIndex, int length)
+    {
+        byte[] result = new byte[length];
+        Array.Copy(array, startIndex, result, 0, length);
+        return result;
     }
 
     private byte[] GetResponse(HttpRequestModel requestModel, WebsiteConfigModel website)

@@ -1,58 +1,57 @@
 using System.Collections.Concurrent;
-using System.Diagnostics.Eventing.Reader;
 using System.Net.Sockets;
 using System.Net;
-using System.Net.WebSockets;
-using System.Reflection.Emit;
 using System.Text;
-using Microsoft.Extensions.FileSystemGlobbing.Internal.Patterns;
-using Microsoft.Extensions.Options;
-using Microsoft.VisualBasic.CompilerServices;
 using WebServer.Models;
 using WebServer.Services;
 
 namespace WebServer;
 
-public class WorkerService : BackgroundService
+public class WorkerService : BackgroundService, IMessengerListener
 {
     private readonly ServerConfigModel _config;
     private readonly ILogger<WorkerService> _logger;
-    private Thread _thread = null!;
-
+    
     private readonly ConcurrentQueue<HttpRequestModel> _requestsQueue = new();
 
     private readonly IHttpRequestParser _parser;
+    private CancellationToken _cancellationToken;
 
 
+    private readonly IMessengerService _messengerService;
     public readonly IWebsiteHostingService _websiteHostingService;
 
     public WorkerService(ILogger<WorkerService> logger,
         IHttpRequestParser parser, 
-        IWebsiteHostingService websiteHostingService)
+        IWebsiteHostingService websiteHostingService,
+        IMessengerService messengerService)
     {
         _config = websiteHostingService.GetSettings();
         //_serverPort = _config.Port;
         _logger = logger;
         _parser = parser;
         _websiteHostingService = websiteHostingService;
+        _messengerService = messengerService;
     }
 
 
-    private void StartServer(CancellationToken stoppingToken)
+    private void StartServer()
     {
+        this._messengerService.AddNewWebSiteAddedListener(this);
         var websites = _config.Websites;
 
         foreach (var website in websites)
         {
-            _thread = new Thread(() => ConnectionThreadMethod(website, stoppingToken));
+            var _thread = new Thread(() => ConnectionThreadMethod(website, _cancellationToken));
             _thread.Start();
         }
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        _cancellationToken = stoppingToken;
         await Task.Yield();
-        StartServer(stoppingToken);
+        StartServer();
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -76,6 +75,8 @@ public class WorkerService : BackgroundService
                 _logger.LogCritical(ex, null);
             }
         }
+        
+        this._messengerService.RemoveWebSiteAddedListener(this);
     }
 
     private void ConnectionThreadMethod(WebsiteConfigModel website, CancellationToken token)
@@ -96,8 +97,6 @@ public class WorkerService : BackgroundService
         }
     }
     
-    
-
     private async Task StartListeningForData(Socket httpServer, CancellationToken token)
     {
         while (!token.IsCancellationRequested)
@@ -268,5 +267,17 @@ public class WorkerService : BackgroundService
     private void LogRequestData(string requestData)
     {
         _logger.LogInformation($"\n{requestData}");
+    }
+
+    public void NewWebSiteAdded(WebsiteConfigModel website)
+    {
+        var _thread = new Thread(
+            () => ConnectionThreadMethod(website, _cancellationToken));
+        _thread.Start();
+    }
+
+    public void WebSiteRemoved(WebsiteConfigModel website)
+    {
+      
     }
 }

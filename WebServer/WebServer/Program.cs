@@ -15,6 +15,7 @@ namespace WebServer
             builder.Services.AddHostedService<WorkerService>();
             builder.Services.AddTransient<IWebsiteHostingService, WebsiteHostingService>();
 
+            builder.Services.AddSingleton<IMessengerService, MessengerService>();
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("WebsiteConfig.json", optional: false,
                     reloadOnChange: true) 

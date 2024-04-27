@@ -33,7 +33,7 @@
     },
     {
       "AllowedHosts": "a",
-      "DefaultPage": "undefined",
+      "DefaultPage": "index.html",
       "Path": "990b4c84-d73b-4059-9cc6-5fe75447e053/a",
       "WebsitePort": 8000
     }

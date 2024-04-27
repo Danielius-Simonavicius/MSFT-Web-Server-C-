@@ -14,9 +14,12 @@ public class WebsiteHostingService: IWebsiteHostingService
     private readonly ILogger<WebsiteHostingService> _logger;
     private readonly string jsonFilePath = "./WebsiteConfig.json";
 
-    public WebsiteHostingService(ILogger<WebsiteHostingService> logger)
+    private readonly IMessengerService _messengerService;
+    public WebsiteHostingService(ILogger<WebsiteHostingService> logger,
+        IMessengerService messengerService)
     {
         _logger = logger;
+        _messengerService = messengerService;
     }
     public void LoadWebsite(byte[] data, HttpRequestModel request, ServerConfigModel config)
     {
@@ -41,6 +44,8 @@ public class WebsiteHostingService: IWebsiteHostingService
 
                 // Write the updated JSON back to the file
                 File.WriteAllText(jsonFilePath, updatedJson);
+                
+                _messengerService.SendNewWebsiteEvent(parsedResult.NewWebsite);
                 
             }
             catch (Exception e)

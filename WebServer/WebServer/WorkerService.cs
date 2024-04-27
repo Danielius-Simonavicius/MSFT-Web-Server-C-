@@ -73,7 +73,7 @@ public class WorkerService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError($@"{ex}");
+                _logger.LogCritical(ex, null);
             }
         }
     }
@@ -103,7 +103,7 @@ public class WorkerService : BackgroundService
         while (!token.IsCancellationRequested)
         {
             var data = "";
-            var totalBytes = Array.Empty<byte>();
+            var totalBytes = new List<byte>();
 
             var bytes = new byte[8192]; 
             var handler = await httpServer.AcceptAsync(token);
@@ -117,13 +117,15 @@ public class WorkerService : BackgroundService
 
                 var partialData = Encoding.ASCII.GetString(bytes, 0, received);
                 data += partialData;
-                if (totalBytes.Length == 0)
+                if (totalBytes.Count == 0)
                 {
                     LogRequestData(data);
                 }
+                
+                totalBytes.AddRange(bytes);
                 // Extend totalBytes array to accommodate new data
-                Array.Resize(ref totalBytes, totalBytes.Length + received);
-                Array.Copy(bytes, 0, totalBytes, totalBytes.Length - received, received);
+                // Array.Resize(ref totalBytes, totalBytes.Length + received);
+                 //Array.Copy(bytes, 0, totalBytes, totalBytes.Length - received, received);
 
 
                 // Extend totalBytes array to accommodate new data
@@ -144,7 +146,7 @@ public class WorkerService : BackgroundService
             //If request is to upload a new website
             if (request.ContentType.StartsWith("multipart/form-data;"))
             {
-                _websiteHostingService.LoadWebsite(totalBytes, request, _config);
+                _websiteHostingService.LoadWebsite(totalBytes.ToArray(), request, _config);
             }
 
             request.Client = handler;

@@ -13,6 +13,7 @@ namespace WebServer
 
             builder.Services.AddTransient<IHttpRequestParser, DefaultHttpParser>();
             builder.Services.AddHostedService<WorkerService>();
+            builder.Services.AddTransient<IWebsiteHostingService, WebsiteHostingService>();
 
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("WebsiteConfig.json", optional: false,
@@ -20,8 +21,7 @@ namespace WebServer
                 .Build();
 
             builder.Services.AddSingleton(configuration); 
-            builder.Services.Configure<ServerConfigModel>(configuration.GetSection("ServerConfig"));
-            
+          
             var host = builder.Build();
             host.Run();
         }

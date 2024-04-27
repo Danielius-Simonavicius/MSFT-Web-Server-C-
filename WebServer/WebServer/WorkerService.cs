@@ -23,15 +23,18 @@ public class WorkerService : BackgroundService
 
     private readonly IHttpRequestParser _parser;
 
-    public readonly WebsiteHostingService WebsiteHostingService = new WebsiteHostingService();
+
+    public readonly IWebsiteHostingService _websiteHostingService;
 
     public WorkerService(ILogger<WorkerService> logger,
-        IHttpRequestParser parser, IOptions<ServerConfigModel> config)
+        IHttpRequestParser parser, 
+        IWebsiteHostingService websiteHostingService)
     {
-        _config = config.Value;
+        _config = websiteHostingService.GetSettings();
         //_serverPort = _config.Port;
         _logger = logger;
         _parser = parser;
+        _websiteHostingService = websiteHostingService;
     }
 
 
@@ -78,11 +81,13 @@ public class WorkerService : BackgroundService
             var httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
             httpServer.Bind(endPoint);
             httpServer.Listen(10000);
+            _logger.LogInformation($"Starting {endPoint}");
             _ = StartListeningForData(httpServer, token);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"{website.Path} Server could not start: {ex.Message}");
+            _logger.LogCritical($"{website.Path} Server could not start: {ex.Message}");
+           _logger.LogCritical(ex, null);
         }
     }
     
@@ -134,7 +139,7 @@ public class WorkerService : BackgroundService
             //If request is to upload a new website
             if (request.ContentType.StartsWith("multipart/form-data;"))
             {
-                WebsiteHostingService.LoadWebsite(totalBytes, request, _config);
+                _websiteHostingService.LoadWebsite(totalBytes, request, _config);
             }
 
             request.Client = handler;

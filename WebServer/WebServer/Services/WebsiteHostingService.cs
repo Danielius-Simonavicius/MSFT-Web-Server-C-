@@ -9,52 +9,51 @@ using static System.Text.RegularExpressions.Regex;
 
 namespace WebServer.Services;
 
-public class WebsiteHostingService
+public class WebsiteHostingService: IWebsiteHostingService
 {
+    private readonly ILogger<WebsiteHostingService> _logger;
+    private readonly string jsonFilePath = "./WebsiteConfig.json";
+
+    public WebsiteHostingService(ILogger<WebsiteHostingService> logger)
+    {
+        _logger = logger;
+    }
     public void LoadWebsite(byte[] data, HttpRequestModel request, ServerConfigModel config)
     {
         // Split the byte array by ------Webkitboundary
-        ParseUploadData(data, request.ContentType, out var newWebsiteModel, out var fileContent,
-            out var uniqueFolderName);
+       var parsedResult =  ParseUploadData(data, request.ContentType);
 
         //If extracting file was successful start new connection thread
-        if (ExtractAndUnzipWebsiteFile(fileContent, config, uniqueFolderName))
+        if (ExtractAndUnzipWebsiteFile(parsedResult.FileContent, 
+                config, parsedResult.UniqueFolderName))
         {
             try
             {
-                //TODO add to start server method with new website
-                var jsonFilePath = "./WebsiteConfig.json";
-
-                // Read JSON file contents into a string
-                var jsonContent = File.ReadAllText(jsonFilePath);
-                var serverConfig = JsonConvert.DeserializeObject<ServerConfigModel>(jsonContent);
+                var serverConfig = this.GetSettings();
                 // Access the "Websites" array within the ServerConfig
-                var websites = serverConfig.Websites as JArray;
+                var websites = serverConfig.Websites;
 
                 // Add the new website configuration to the array
-                websites?.Add(JObject.FromObject(newWebsiteModel));
+                websites?.Add(parsedResult.NewWebsite);
 
                 // Serialize the updated ServerConfig object back to JSON
                 var updatedJson = JsonConvert.SerializeObject(serverConfig, Formatting.Indented);
 
                 // Write the updated JSON back to the file
                 File.WriteAllText(jsonFilePath, updatedJson);
-
-
-                // _thread = new Thread(() => ConnectionThreadMethod(website, stoppingToken));
-                // _thread.Start();
+                
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                _logger.LogCritical(e, null);
                 throw;
             }
         }
     }
 
-    public void ParseUploadData(byte[] data, string contentType, out WebsiteConfigModel newWebsite,
-        out byte[] fileContent, out string uniqueFolderName)
+    public ParseResultModel? ParseUploadData(byte[] data, string contentType)
     {
+        ParseResultModel result = new ParseResultModel();
         var match = Match(contentType,
             @"boundary=(?<boundary>.+)");
         var boundary = match.Success ? match.Groups["boundary"].Value.Trim() : "";
@@ -66,12 +65,12 @@ public class WebsiteHostingService
         var stringParts = parts.ConvertAll(bytes => Encoding.ASCII.GetString(bytes)).ToArray();
 
         //This removes the filecontents header
-        fileContent = ExtractFileContent(parts[1]);
-        uniqueFolderName = Guid.NewGuid().ToString();
-        newWebsite = new WebsiteConfigModel
+        result.FileContent = ExtractFileContent(parts[1]);
+        result.UniqueFolderName = Guid.NewGuid().ToString();
+        result.NewWebsite = new WebsiteConfigModel
         {
             AllowedHosts = ExtractValue("AllowedHosts"),
-            Path = $"{uniqueFolderName}/{ExtractValue("Path")}",
+            Path = $"{result.UniqueFolderName}/{ExtractValue("Path")}",
             DefaultPage = ExtractValue("DefaultPage"),
             WebsitePort = FindAvailablePort()
         };
@@ -84,6 +83,17 @@ public class WebsiteHostingService
 
             return _match.Groups[1].Value;
         }
+
+        return result;
+    }
+
+    public ServerConfigModel GetSettings()
+    {
+        
+        // Read JSON file contents into a string
+        var jsonContent = File.ReadAllText(jsonFilePath);
+        var serverConfig = JsonConvert.DeserializeObject<ServerConfigModel>(jsonContent);
+        return serverConfig!;
     }
 
     private bool ExtractAndUnzipWebsiteFile(byte[] zipData, ServerConfigModel config, string uniqueFolderName)

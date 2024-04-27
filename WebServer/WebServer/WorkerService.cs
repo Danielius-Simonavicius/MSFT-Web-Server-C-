@@ -59,11 +59,16 @@ public class WorkerService : BackgroundService
             {
                 if (_requestsQueue.TryDequeue(out var requestModel) && requestModel.Client != null)
                 {
-                    var handler = requestModel.Client;
-                    await handler.SendToAsync(GetResponse(requestModel,
-                            _config.Websites.First((x) => x.WebsitePort == requestModel.RequestedPort)),
-                        handler.RemoteEndPoint!, stoppingToken);
-                    handler.Close();
+                    _ = Task.Run(async () =>
+                    {
+                        var handler = requestModel.Client;
+                        await handler.SendToAsync(GetResponse(requestModel,
+                                _config.Websites.First((x) => x.WebsitePort == requestModel.RequestedPort)),
+                            handler.RemoteEndPoint!, stoppingToken);
+                        handler.Close();
+                    }, stoppingToken)
+                        .ContinueWith(t => this._logger.LogCritical(t.Exception, null), TaskContinuationOptions.OnlyOnFaulted);
+
                 }
             }
             catch (Exception ex)

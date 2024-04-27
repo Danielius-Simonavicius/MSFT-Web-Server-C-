@@ -65,7 +65,7 @@ public class WorkerService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError($"{ex}");
+                _logger.LogError($@"{ex}");
             }
         }
     }

@@ -85,6 +85,8 @@ public class WorkerService : BackgroundService
             Console.WriteLine($"{website.Path} Server could not start: {ex.Message}");
         }
     }
+    
+    
 
     private async Task StartListeningForData(Socket httpServer, CancellationToken token)
     {
@@ -93,8 +95,9 @@ public class WorkerService : BackgroundService
             var data = "";
             var totalBytes = Array.Empty<byte>();
 
-            var bytes = new byte[1024 * 25]; //102400
+            var bytes = new byte[8192]; 
             var handler = await httpServer.AcceptAsync(token);
+            
             var totalReceivedBytes = 0;
 
             while (!token.IsCancellationRequested)
@@ -108,11 +111,12 @@ public class WorkerService : BackgroundService
                 {
                     LogRequestData(data);
                 }
-
                 // Extend totalBytes array to accommodate new data
                 Array.Resize(ref totalBytes, totalBytes.Length + received);
                 Array.Copy(bytes, 0, totalBytes, totalBytes.Length - received, received);
 
+
+                // Extend totalBytes array to accommodate new data
                 // Check if the received data contains a complete message
                 if (received < bytes.Length)
                 {

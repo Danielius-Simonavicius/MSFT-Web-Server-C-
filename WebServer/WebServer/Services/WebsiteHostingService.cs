@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using WebServer.Models;
 using static System.Text.RegularExpressions.Regex;
 
@@ -10,29 +11,49 @@ namespace WebServer.Services;
 
 public class WebsiteHostingService
 {
-    public static void LoadWebsite(byte[] data, HttpRequestModel request, ServerConfigModel config)
+    public void LoadWebsite(byte[] data, HttpRequestModel request, ServerConfigModel config)
     {
         // Split the byte array by ------Webkitboundary
-        ParseUploadData(data, request.ContentType, out var newWebsiteModel, out var fileContent);
+        ParseUploadData(data, request.ContentType, out var newWebsiteModel, out var fileContent,
+            out var uniqueFolderName);
 
         //If extracting file was successful start new connection thread
-        if (ExtractAndUnzipWebsiteFile(fileContent, config))
+        if (ExtractAndUnzipWebsiteFile(fileContent, config, uniqueFolderName))
         {
-            var test = newWebsiteModel;
-            //TODO add to start server method with new website
+            try
+            {
+                //TODO add to start server method with new website
+                var jsonFilePath = "./WebsiteConfig.json";
 
-            // var list = JsonConvert.DeserializeObject<List<WebsiteConfigModel>>(WebsiteConfigModel);
-            // list.Add(new WebsiteConfigModel();
-            //var convertedJson = JsonConvert.SerializeObject(list, Formatting.Indented);
+                // Read JSON file contents into a string
+                var jsonContent = File.ReadAllText(jsonFilePath);
+                var serverConfig = JsonConvert.DeserializeObject<ServerConfigModel>(jsonContent);
+                // Access the "Websites" array within the ServerConfig
+                var websites = serverConfig.Websites as JArray;
+
+                // Add the new website configuration to the array
+                websites?.Add(JObject.FromObject(newWebsiteModel));
+
+                // Serialize the updated ServerConfig object back to JSON
+                var updatedJson = JsonConvert.SerializeObject(serverConfig, Formatting.Indented);
+
+                // Write the updated JSON back to the file
+                File.WriteAllText(jsonFilePath, updatedJson);
 
 
-            // _thread = new Thread(() => ConnectionThreadMethod(website, stoppingToken));
-            // _thread.Start();
+                // _thread = new Thread(() => ConnectionThreadMethod(website, stoppingToken));
+                // _thread.Start();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
         }
     }
 
-    public static void ParseUploadData(byte[] data, string contentType, out WebsiteConfigModel newWebsite,
-        out byte[] fileContent)
+    public void ParseUploadData(byte[] data, string contentType, out WebsiteConfigModel newWebsite,
+        out byte[] fileContent, out string uniqueFolderName)
     {
         var match = Match(contentType,
             @"boundary=(?<boundary>.+)");
@@ -46,11 +67,11 @@ public class WebsiteHostingService
 
         //This removes the filecontents header
         fileContent = ExtractFileContent(parts[1]);
-
+        uniqueFolderName = Guid.NewGuid().ToString();
         newWebsite = new WebsiteConfigModel
         {
             AllowedHosts = ExtractValue("AllowedHosts"),
-            Path = ExtractValue("Path"),
+            Path = $"{uniqueFolderName}/{ExtractValue("Path")}",
             DefaultPage = ExtractValue("DefaultPage"),
             WebsitePort = FindAvailablePort()
         };
@@ -65,7 +86,7 @@ public class WebsiteHostingService
         }
     }
 
-    private static bool ExtractAndUnzipWebsiteFile(byte[] zipData, ServerConfigModel config)
+    private bool ExtractAndUnzipWebsiteFile(byte[] zipData, ServerConfigModel config, string uniqueFolderName)
     {
         try
         {
@@ -81,9 +102,7 @@ public class WebsiteHostingService
                     continue;
 
                 // Combine output path with entry's name
-                var filePath =
-                    Path.Combine(config.RootFolder,
-                        entry.FullName);
+                var filePath = Path.Combine(config.RootFolder, uniqueFolderName, entry.FullName);
 
                 // Create directory if it doesn't exist
                 Directory.CreateDirectory(Path.GetDirectoryName(filePath) ?? string.Empty);
@@ -101,7 +120,7 @@ public class WebsiteHostingService
         return true;
     }
 
-    private static byte[] ExtractFileContent(byte[] byteArray)
+    private byte[] ExtractFileContent(byte[] byteArray)
     {
         const string pkSignature = "PK";
         var pkBytes = Encoding.ASCII.GetBytes(pkSignature);
@@ -116,7 +135,7 @@ public class WebsiteHostingService
         return null!; // or throw an exception
     }
 
-    private static List<byte[]> SplitByteArray(byte[] byteArray, byte[] delimiter)
+    private List<byte[]> SplitByteArray(byte[] byteArray, byte[] delimiter)
     {
         var parts = new List<byte[]>();
         var delimiterIndex = IndexOf(byteArray, delimiter, 0);
@@ -137,7 +156,7 @@ public class WebsiteHostingService
         return parts;
     }
 
-    private static int IndexOf(byte[] array, byte[] pattern, int startIndex)
+    private int IndexOf(byte[] array, byte[] pattern, int startIndex)
     {
         for (var i = startIndex; i <= array.Length - pattern.Length; i++)
         {
@@ -159,14 +178,14 @@ public class WebsiteHostingService
         return -1;
     }
 
-    private static byte[] SubArray(byte[] array, int startIndex, int length)
+    private byte[] SubArray(byte[] array, int startIndex, int length)
     {
         var result = new byte[length];
         Array.Copy(array, startIndex, result, 0, length);
         return result;
     }
 
-    public static int FindAvailablePort(int startingPort = 8000, int maxPort = 65535)
+    public int FindAvailablePort(int startingPort = 8000, int maxPort = 65535)
     {
         for (var port = startingPort; port <= maxPort; port++)
         {
@@ -176,10 +195,10 @@ public class WebsiteHostingService
             }
         }
 
-        throw new System.Exception("No available ports found in the specified range.");
+        throw new Exception("No available ports found in the specified range.");
     }
 
-    private static bool IsPortAvailable(int port)
+    private bool IsPortAvailable(int port)
     {
         try
         {

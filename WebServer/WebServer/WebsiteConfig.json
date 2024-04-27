@@ -1,6 +1,5 @@
 {
   "ServerConfig": {
-    "MaxPendingConnections": 100,
     "RootFolder": "./WebSites",
     "Websites":[
       {

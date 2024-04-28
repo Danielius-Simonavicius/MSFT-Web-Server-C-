@@ -1,8 +1,3 @@
-using System.IO.Compression;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Text.RegularExpressions;
-using WebServer.Models;
 using WebServer.Models;
 
 namespace WebServer.Services;
@@ -24,12 +19,12 @@ public class DefaultHttpParser : IHttpRequestParser
 
     public HttpRequestModel ParseHttpRequest(string input)
     {
-        string[] sections =
+        var sections =
             input.Split(new[] { "\r\n\r\n" },
                 StringSplitOptions.RemoveEmptyEntries); //0 header, 1 and so on is body values
         var model = new HttpRequestModel();
         //Splitting all logged data into array lines
-        string[] lines = sections[0].Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+        var lines = sections[0].Split(new[] { Environment.NewLine }, StringSplitOptions.None);
 
         //Extracting logged data and placing them into HTTPRequestModel
         model.Host = ExtractValue(lines, "Host");

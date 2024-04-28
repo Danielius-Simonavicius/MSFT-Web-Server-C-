@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { UploadWebsiteService } from 'src/services/upload-website.service';
+import { WebsiteService } from 'src/services/website.service';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -20,7 +20,7 @@ import { UploadPageComponent } from './pages/upload-page/upload-page.component';
     HttpClientModule,
     BrowserAnimationsModule,
   ],
-  providers: [UploadWebsiteService],
+  providers: [WebsiteService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

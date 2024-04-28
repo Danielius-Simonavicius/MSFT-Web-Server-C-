@@ -1,29 +1,29 @@
-<h2 class="content-block">Admin Panel</h2>
-<form class = "uploadForm" #websiteUpload="ngForm" (ngSubmit)="onSubmit()" novalidate >
+<div class="left-section">
+  <h2 class="content-block">Admin Panel</h2>
+  <form class="uploadForm" #websiteUpload="ngForm" (ngSubmit)="onSubmit()" novalidate>
+    <input type="text" name="allowedHosts" placeholder="AllowedHosts" [(ngModel)]="dataFields.allowedHosts" required>
+    <div *ngIf="websiteUpload.submitted && websiteUpload.controls['allowedHosts'].errors?.['required']" class="error-message">
+      AllowedHosts is required.
+    </div>
 
-  <!-- <input type="text" name="websiteName" placeholder="Name of Website" [(ngModel)]="dataFields.websiteName"> -->
-  <input type="text" name="allowedHosts" placeholder="AllowedHosts" [(ngModel)]="dataFields.allowedHosts" required>
-  <div *ngIf="websiteUpload.submitted && websiteUpload.controls['allowedHosts'].errors?.['required']" class="error-message">
-    AllowedHosts is required.
-  </div>
+    <input type="text" name="path" placeholder="Path" [(ngModel)]="dataFields.path" required>
+    <div *ngIf="websiteUpload.submitted && websiteUpload.controls['path'].errors?.['required']" class="error-message">
+      Path is required.
+    </div>
 
-  <input type="text" name="path" placeholder="Path" [(ngModel)]="dataFields.path" required>
-  <div *ngIf="websiteUpload.submitted && websiteUpload.controls['path'].errors?.['required']" class="error-message">
-    Path is required.
-  </div>
-  
-  <input type="text" name="defaultPage" placeholder="index.html"[(ngModel)]="dataFields.defaultPage" required>
-  <div *ngIf="websiteUpload.submitted && websiteUpload.controls['defaultPage'].errors?.['required']" class="error-message">
-    Default Page is required.
-  </div>
+    <input type="text" name="defaultPage" placeholder="index.html" [(ngModel)]="dataFields.defaultPage" required>
+    <div *ngIf="websiteUpload.submitted && websiteUpload.controls['defaultPage'].errors?.['required']" class="error-message">
+      Default Page is required.
+    </div>
 
-  <input type="file" accept=".zip,.rar,.7zip" name="folder" placeholder="folder" (change)="onFolderSelected($event)" name="folder" required>
-  <div *ngIf="websiteUpload.submitted && websiteUpload.controls['folder'].errors?.['required']" class="error-message">
-    Folder is required.
-  </div>
-  <button type="submit">Upload </button >
-  <br />
-</form>
+    <input type="file" accept=".zip,.rar,.7zip" name="folder" (change)="onFolderSelected($event)" required>
+    <div *ngIf="websiteUpload.submitted && websiteUpload.controls['folder'].errors?.['required']" class="error-message">
+      Folder is required.
+    </div>
+
+    <button type="submit">Upload</button>
+  </form>
+</div>
 
 <!-- <div class = dropzone>
   <input type="file" #fileDropRef id = "fileDropRef" multiple (change)="onFolderSelected($event)"/>
@@ -45,4 +45,17 @@
   <p>AllowedHosts: {{ formData.allowedHosts }}</p>
   <p>Path: {{ formData.path }}</p>
   <p>Default Page: {{ formData.defaultPage }}</p> -->
+</div>
+<div class="right-section">
+  <div *ngFor="let website of websites$ | async" class="website-card">
+    <div class="website-header">
+      <h2>{{ website.WebsiteName }}</h2>
+      <p>Path: {{website.Path}}</p>
+      <p>Allowed Hosts: {{ website.AllowedHosts }}</p>
+    </div>
+    <div class="website-details">
+      <p>Default Page: {{ website.DefaultPage }}</p>
+      <p>Website Port: {{ website.WebsitePort }}</p>
+    </div>
+  </div>
 </div>

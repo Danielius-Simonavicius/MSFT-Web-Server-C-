@@ -2,40 +2,39 @@
   "RootFolder": "./WebSites",
   "Websites": [
     {
+      "WebsiteName": "AdminPanel",
       "AllowedHosts": "*",
       "DefaultPage": "index.html",
       "Path": "Admin-Panel/dist/admin-panel",
       "WebsitePort": 9090
     },
     {
+      "WebsiteName": "XtraceLoginPage",
       "AllowedHosts": "*",
       "DefaultPage": "index.html",
       "Path": "XtraceLoginPage",
       "WebsitePort": 8089
     },
     {
+      "WebsiteName": "MehirsLoginPage",
       "AllowedHosts": "*",
       "DefaultPage": "index.html",
-      "Path": "DemoSite1",
+      "Path": "MehirsLoginPage",
       "WebsitePort": 8085
     },
     {
+      "WebsiteName": "DoriansWebsite",
       "AllowedHosts": "*",
       "DefaultPage": "index.html",
       "Path": "DorianWebsite",
       "WebsitePort": 8086
     },
     {
+      "WebsiteName": "Assignment5",
       "AllowedHosts": "*",
       "DefaultPage": "index.html",
       "Path": "frontend",
       "WebsitePort": 9091
-    },
-    {
-      "AllowedHosts": "a",
-      "DefaultPage": "index.html",
-      "Path": "990b4c84-d73b-4059-9cc6-5fe75447e053/a",
-      "WebsitePort": 8000
     }
   ]
 }

@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Net.Sockets;
 using System.Net;
 using System.Text;
+using Newtonsoft.Json;
 using WebServer.Models;
 using WebServer.Services;
 
@@ -11,7 +12,7 @@ public class WorkerService : BackgroundService, IMessengerListener
 {
     private readonly ServerConfigModel _config;
     private readonly ILogger<WorkerService> _logger;
-    
+
     private readonly ConcurrentQueue<HttpRequestModel> _requestsQueue = new();
 
     private readonly IHttpRequestParser _parser;
@@ -22,7 +23,7 @@ public class WorkerService : BackgroundService, IMessengerListener
     public readonly IWebsiteHostingService _websiteHostingService;
 
     public WorkerService(ILogger<WorkerService> logger,
-        IHttpRequestParser parser, 
+        IHttpRequestParser parser,
         IWebsiteHostingService websiteHostingService,
         IMessengerService messengerService)
     {
@@ -35,9 +36,9 @@ public class WorkerService : BackgroundService, IMessengerListener
     }
 
 
-    private void StartServer()
+    private void StartWebsites()
     {
-        this._messengerService.AddNewWebSiteAddedListener(this);
+        _messengerService.AddNewWebSiteAddedListener(this);
         var websites = _config.Websites;
 
         foreach (var website in websites)
@@ -51,7 +52,7 @@ public class WorkerService : BackgroundService, IMessengerListener
     {
         _cancellationToken = stoppingToken;
         await Task.Yield();
-        StartServer();
+        StartWebsites();
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -59,15 +60,15 @@ public class WorkerService : BackgroundService, IMessengerListener
                 if (_requestsQueue.TryDequeue(out var requestModel) && requestModel.Client != null)
                 {
                     _ = Task.Run(async () =>
-                    {
-                        var handler = requestModel.Client;
-                        await handler.SendToAsync(GetResponse(requestModel,
-                                _config.Websites.First((x) => x.WebsitePort == requestModel.RequestedPort)),
-                            handler.RemoteEndPoint!, stoppingToken);
-                        handler.Close();
-                    }, stoppingToken)
-                        .ContinueWith(t => this._logger.LogCritical(t.Exception, null), TaskContinuationOptions.OnlyOnFaulted);
-
+                        {
+                            var handler = requestModel.Client;
+                            await handler.SendToAsync(GetResponse(requestModel,
+                                    _config.Websites.First((x) => x.WebsitePort == requestModel.RequestedPort)),
+                                handler.RemoteEndPoint!, stoppingToken);
+                            handler.Close();
+                        }, stoppingToken)
+                        .ContinueWith(t => _logger.LogCritical(t.Exception, null),
+                            TaskContinuationOptions.OnlyOnFaulted);
                 }
             }
             catch (Exception ex)
@@ -75,8 +76,8 @@ public class WorkerService : BackgroundService, IMessengerListener
                 _logger.LogCritical(ex, null);
             }
         }
-        
-        this._messengerService.RemoveWebSiteAddedListener(this);
+
+        _messengerService.RemoveWebSiteAddedListener(this);
     }
 
     private void ConnectionThreadMethod(WebsiteConfigModel website, CancellationToken token)
@@ -93,10 +94,10 @@ public class WorkerService : BackgroundService, IMessengerListener
         catch (Exception ex)
         {
             _logger.LogCritical($"{website.Path} Server could not start: {ex.Message}");
-           _logger.LogCritical(ex, null);
+            _logger.LogCritical(ex, null);
         }
     }
-    
+
     private async Task StartListeningForData(Socket httpServer, CancellationToken token)
     {
         while (!token.IsCancellationRequested)
@@ -104,9 +105,9 @@ public class WorkerService : BackgroundService, IMessengerListener
             var data = "";
             var totalBytes = new List<byte>();
 
-            var bytes = new byte[8192]; 
+            var bytes = new byte[16_384];
             var handler = await httpServer.AcceptAsync(token);
-            
+
             var totalReceivedBytes = 0;
 
             while (!token.IsCancellationRequested)
@@ -120,11 +121,11 @@ public class WorkerService : BackgroundService, IMessengerListener
                 {
                     LogRequestData(data);
                 }
-                
+
                 totalBytes.AddRange(bytes);
                 // Extend totalBytes array to accommodate new data
                 // Array.Resize(ref totalBytes, totalBytes.Length + received);
-                 //Array.Copy(bytes, 0, totalBytes, totalBytes.Length - received, received);
+                //Array.Copy(bytes, 0, totalBytes, totalBytes.Length - received, received);
 
 
                 // Extend totalBytes array to accommodate new data
@@ -179,13 +180,24 @@ public class WorkerService : BackgroundService, IMessengerListener
 
         switch (methodType)
         {
-            case "GET":
-                // put logic in here
-                break;
-            case "POST" when fileName.Equals("uploadWebsite"):
+            case "GET" when fileName.Equals("api/getWebsitesList"):
+                var responseHeader =
+                    $"HTTP/1.1 {statusCode}\r\n" +
+                    "Server: Microsoft_web_server\r\n" +
+                    "Content-Type: application/json; charset=UTF-8\r\n" +
+                    $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n\r\n";
+
+                var serverConfig = _websiteHostingService.GetSettings();
+                var websites = serverConfig.Websites;
+
+                // Convert the websites list to JSON
+                var websiteBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(websites));
+                var resData1 = Encoding.ASCII.GetBytes(responseHeader).Concat(websiteBytes);
+                return resData1.ToArray();
+
+            case "POST" when fileName.Equals("api/uploadWebsite"):
             {
-                statusCode = "200 OK";
-                String responseHeader =
+                responseHeader =
                     $"HTTP/1.1 {statusCode}\r\n" +
                     "Server: Microsoft_web_server\r\n" +
                     $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n\r\n";
@@ -278,6 +290,5 @@ public class WorkerService : BackgroundService, IMessengerListener
 
     public void WebSiteRemoved(WebsiteConfigModel website)
     {
-      
     }
 }

@@ -5,8 +5,7 @@ namespace WebServer.Services;
 public class MessengerService: IMessengerService
 {
 
-    private List<IMessengerListener> websiteAddedListeners
-        = new List<IMessengerListener>();
+    private List<IMessengerListener> websiteAddedListeners = new();
     
     public void AddNewWebSiteAddedListener(IMessengerListener listener)
     {

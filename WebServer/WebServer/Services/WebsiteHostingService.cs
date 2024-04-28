@@ -130,8 +130,7 @@ public class WebsiteHostingService: IWebsiteHostingService
         {
             return false; //failed to extract file
         }
-
-        var model = new WebsiteConfigModel();
+        
         return true;
     }
 
@@ -200,7 +199,7 @@ public class WebsiteHostingService: IWebsiteHostingService
         return result;
     }
 
-    public int FindAvailablePort(int startingPort = 8000, int maxPort = 65535)
+    private int FindAvailablePort(int startingPort = 8000, int maxPort = 65535)
     {
         for (var port = startingPort; port <= maxPort; port++)
         {

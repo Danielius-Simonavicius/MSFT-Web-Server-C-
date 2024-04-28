@@ -1,57 +1,62 @@
+.left-section {
+  width: 40%; /* Adjust width as needed */
+  float: left; /* Float left to position on the left side */
+  padding: 20px; /* Add padding for spacing */
+  box-sizing: border-box; /* Include padding in width calculation */
+}
+
 .content-block {
   font-size: 24px;
   font-weight: bold;
-  color: #333;
-  /* Adjust color as needed */
   margin-bottom: 20px;
 }
 
 .uploadForm {
-  max-width: 400px;
-  /* Adjust width as needed */
-  margin: 0 auto;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  background-color: #f9f9f9;
+  width: 100%; /* Full width of parent container */
 }
 
-.uploadForm input[type="text"],
-.uploadForm input[type="file"],
+.uploadForm input,
 .uploadForm button {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  box-sizing: border-box;
-  font-size: 16px;
-}
-
-.uploadForm input[type="text"]:focus,
-.uploadForm input[type="file"]:focus {
-  border-color: #4CAF50;
-  outline: none;
-}
-
-.uploadForm button {
-  background-color: #4CAF50;
-  /* Green background color */
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.uploadForm button:hover {
-  background-color: #45a049;
-  /* Darker green on hover */
+  width: 100%; /* Full width for input fields and button */
+  margin-bottom: 10px; /* Add spacing between elements */
 }
 
 .error-message {
   color: red;
   font-size: 14px;
-  display: inline-block;
-  margin-left: 10px; /* Adjust as needed */
+  margin-top: 5px;
+}
+
+
+.right-section {
+  width: 60%; /* Adjust width as needed */
+  display:grid;
+  width: 200px;
+  float: left; /* Float left to position on the right side */
+  padding: 20px; /* Add padding for spacing */
+  box-sizing: border-box; /* Include padding in width calculation */
+}
+
+.website-card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+  width: 500px;
+}
+
+.website-header h2 {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.website-header p {
+  font-size: 16px;
+  color: #666;
+}
+
+.website-details p {
+  font-size: 14px;
+  margin-bottom: 8px;
 }

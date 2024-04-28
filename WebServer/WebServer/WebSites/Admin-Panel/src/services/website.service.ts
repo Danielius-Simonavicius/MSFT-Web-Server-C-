@@ -2,15 +2,20 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/services/environment';
-import { UploadWebsite } from '../models/upload-website.model';
+import { Website } from 'src/models/website-list.model';
+
 @Injectable({
   providedIn: 'root'
 })
-export class UploadWebsiteService {
+export class WebsiteService {
 
   constructor(private http: HttpClient) { }
 
   uploadWebsite(model: FormData): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/uploadWebsite`, model);
+    return this.http.post<any>(`${environment.apiUrl}/api/uploadWebsite`, model);
+  }
+
+  getAllWebsites(): Observable<Website[]> {
+    return this.http.get<Website[]>(`${environment.apiUrl}/api/getWebsitesList`);
   }
 }

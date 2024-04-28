@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { UploadWebsiteService } from 'src/services/upload-website.service';
+import { WebsiteService } from 'src/services/website.service';
 import { UploadWebsite } from 'src/models/upload-website.model';
+import { Website } from 'src/models/website-list.model';
+import { Observable, of } from 'rxjs';
 
 @Component({
   selector: 'app-upload-page',
@@ -9,12 +11,28 @@ import { UploadWebsite } from 'src/models/upload-website.model';
 })
 export class UploadPageComponent implements OnInit{
   formData = new FormData();
+  
+  websites$: Observable<any[]> | undefined; 
   dataFields = new UploadWebsite();
   submitted: boolean = false;
-  constructor(private uploadWebsiteService: UploadWebsiteService) {}
+
+  constructor(private websiteService: WebsiteService) {}
 
 
   ngOnInit(): void {
+    this.loadList();
+  }
+
+  loadList(){
+    this.websiteService.getAllWebsites().subscribe(
+      (websites) => {
+        console.log('Websites:', websites);
+        this.websites$ = of(websites); // Use of() to convert array to observable
+      },
+      (error) => {
+        console.error('Error fetching websites:', error);
+      }
+    );
   }
   
   onFolderSelected(event: any) {
@@ -30,7 +48,7 @@ export class UploadPageComponent implements OnInit{
     this.formData.append("AllowedHosts", this.dataFields.allowedHosts);
     this.formData.append("Path", this.dataFields.path);
     this.formData.append("DefaultPage", this.dataFields.defaultPage);
-    this.uploadWebsiteService.uploadWebsite(this.formData).subscribe(
+    this.websiteService.uploadWebsite(this.formData).subscribe(
       response => {
         console.log('Upload successful:', response);
         this.submitted = true;

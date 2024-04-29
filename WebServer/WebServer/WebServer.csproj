@@ -177,5 +177,8 @@
       <_ContentIncludedByDefault Remove="WebSites\b2a4f00e-2480-4b3b-9299-a1daf68e9e4a\assignment-04-22507246\server\node_modules\yallist\package.json" />
       <_ContentIncludedByDefault Remove="WebSites\b2a4f00e-2480-4b3b-9299-a1daf68e9e4a\assignment-04-22507246\server\package-lock.json" />
       <_ContentIncludedByDefault Remove="WebSites\b2a4f00e-2480-4b3b-9299-a1daf68e9e4a\assignment-04-22507246\server\package.json" />
+      <_ContentIncludedByDefault Remove="WebSites\49402781-0620-4b7b-acaf-955fba4cd62f\Assingment5CS230\backend\package-lock.json" />
+      <_ContentIncludedByDefault Remove="WebSites\49402781-0620-4b7b-acaf-955fba4cd62f\Assingment5CS230\backend\package.json" />
+      <_ContentIncludedByDefault Remove="WebSites\49402781-0620-4b7b-acaf-955fba4cd62f\Assingment5CS230\backend\tsconfig.json" />
     </ItemGroup>
 </Project>

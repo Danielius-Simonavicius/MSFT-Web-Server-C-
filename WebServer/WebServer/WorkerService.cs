@@ -58,16 +58,11 @@ public class WorkerService : BackgroundService, IMessengerListener
             {
                 if (_requestsQueue.TryDequeue(out var requestModel) && requestModel.Client != null)
                 {
-                    _ = Task.Run(async () =>
-                        {
-                            var handler = requestModel.Client;
-                            var website = _config.Websites.FirstOrDefault(x => x.WebsitePort == requestModel.RequestedPort);
-                            await handler.SendToAsync(GetResponse(requestModel,website),
-                                handler.RemoteEndPoint!, stoppingToken);
-                            handler.Close();
-                        }, stoppingToken)
-                        .ContinueWith(t => _logger.LogCritical(t.Exception, null),
-                            TaskContinuationOptions.OnlyOnFaulted);
+                    var handler = requestModel.Client;
+                    var website = _config.Websites.FirstOrDefault(x => x.WebsitePort == requestModel.RequestedPort);
+                    await handler.SendToAsync(GetResponse(requestModel, website),
+                        handler.RemoteEndPoint!, stoppingToken);
+                    handler.Close();
                 }
             }
             catch (Exception ex)
@@ -130,39 +125,22 @@ public class WorkerService : BackgroundService, IMessengerListener
                 }
 
                 _logger.LogInformation($"Total MB received: {totalReceivedBytes / (1024 * 1024)}");
-                
             }
-        
-            string filePath = "/Users/danieljr/Desktop/Projects/MSFT-Web-Server-C-/WebServer/WebServerTests/Services/fakeHttpRequest.txt";
-            
+
 
             //If request is to upload a new website
             if (request.ContentType.StartsWith("multipart/form-data;") && request.RequestedPort is 9090 or 4200)
             {
                 _websiteHostingService.LoadWebsite(totalBytes.ToArray(), request, _config);
-                WriteBytesToFile(filePath, totalBytes.ToArray());
-
             }
 
             request.Client = handler;
             _requestsQueue.Enqueue(request);
         }
     }
-    
-    static void WriteBytesToFile(string filePath, byte[] bytes)
-    {
-        try
-        {
-            // Write all bytes to the specified file path
-            File.WriteAllBytes(filePath, bytes);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error writing bytes to file: {ex.Message}");
-        }
-    }
 
-    private byte[] GetResponse(HttpRequestModel requestModel, WebsiteConfigModel website)
+
+    public byte[] GetResponse(HttpRequestModel requestModel, WebsiteConfigModel website)
     {
         var statusCode = "200 OK";
         var fileName = requestModel.Path; // File path e.g. "/styles-XHU57CVJ.css"

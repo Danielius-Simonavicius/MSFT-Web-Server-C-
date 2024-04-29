@@ -1,0 +1,57 @@
+/* customer.component.css */
+
+/* Container */
+.customer-container {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  /* Heading */
+  .customer-container h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+  
+  /* Form */
+  .customer-container form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Form Field */
+  .customer-container form div {
+    margin-bottom: 15px;
+  }
+  
+  /* Labels */
+  .customer-container label {
+    font-weight: bold;
+  }
+  
+  /* Input Fields */
+  .customer-container input[type="text"],
+  .customer-container input[type="email"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  /* Upload Button */
+  .customer-container button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  /* Upload Button Hover */
+  .customer-container button:hover {
+    background-color: #0056b3;
+  }
+  
+  .priceDisplay{
+    float: right;
+  }

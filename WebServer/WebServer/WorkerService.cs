@@ -133,14 +133,11 @@ public class WorkerService : BackgroundService, IMessengerListener
                 
             }
         
-            string filePath = "/Users/danieljr/Desktop/Projects/MSFT-Web-Server-C-/WebServer/WebServerTests/Services/fakeHttpRequest.txt";
-            
-
+      
             //If request is to upload a new website
             if (request.ContentType.StartsWith("multipart/form-data;") && request.RequestedPort is 9090 or 4200)
             {
                 _websiteHostingService.LoadWebsite(totalBytes.ToArray(), request, _config);
-                WriteBytesToFile(filePath, totalBytes.ToArray());
 
             }
 
@@ -149,18 +146,6 @@ public class WorkerService : BackgroundService, IMessengerListener
         }
     }
     
-    static void WriteBytesToFile(string filePath, byte[] bytes)
-    {
-        try
-        {
-            // Write all bytes to the specified file path
-            File.WriteAllBytes(filePath, bytes);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error writing bytes to file: {ex.Message}");
-        }
-    }
 
     private byte[] GetResponse(HttpRequestModel requestModel, WebsiteConfigModel website)
     {

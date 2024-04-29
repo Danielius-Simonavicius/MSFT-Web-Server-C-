@@ -1,0 +1,105 @@
+/* customers.component.css */
+
+/* Customer Card */
+.customer-card {
+  border: 5px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 20px;
+  width: 500px ;
+  display: flex; /* Use flexbox */
+  align-items: center; /* Align items vertically */
+  flex-wrap: wrap;
+}
+
+.customer-header {
+  margin-right: 20px; /* Add some space between header and details */
+}
+
+.customer-header h2 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.customer-details {
+  margin-top: 10px;
+}
+
+.purchase-history {
+  margin-top: auto; /* Push purchase history to the bottom */
+}
+
+.purchase-history h3 {
+  margin-bottom: 5px;
+}
+
+.purchase-history ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.purchase-history li {
+  margin-bottom: 5px;
+}
+
+.purchaseHistory {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.delete-button {
+  padding: 8px 16px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.delete-button:hover {
+  background-color: #c82333;
+}
+
+.get-random-customer-button,
+.add-customer-button {  
+  margin-top: 10px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 20px; /* Adjust margin as needed */
+}
+
+.add-customer-button:hover {
+  background-color: #0056b3;
+}
+.get-random-customer-button:hover {
+  background-color: #0056b3;
+}
+
+.priceDisplay{
+  float: right;
+  color: #c82333;
+}
+.container {
+  display: flex;
+  justify-content: right;
+  align-items: center;
+  height: 200px;
+  width: 750px;
+}
+
+.content-box {
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+}
+
+.get-random-customer-button {
+  margin-bottom: 0px;
+  /* Button styles */
+}

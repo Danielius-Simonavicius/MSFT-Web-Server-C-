@@ -1,0 +1,16 @@
+.navbar {
+    background-color: #333; /* Set background color */
+    color: #fff; /* Set text color */
+    padding: 1rem; /* Add padding */
+  }
+  
+  .navbar a {
+    color: #fff; /* Set link text color */
+    text-decoration: none; /* Remove underline */
+    margin-right: 1rem; /* Add spacing between links */
+  }
+  
+  .navbar a:hover {
+    text-decoration: underline; /* Add underline on hover */
+  }
+  

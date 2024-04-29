@@ -1,0 +1,55 @@
+<!-- customer.component.html -->
+
+<div class="customer-container" *ngIf="customer">
+    <h2>Edit Customer</h2>
+    <form>
+      <div>
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title" [(ngModel)]="customer.title" required>
+      </div>
+      <div>
+        <label for="firstName">First Name:</label>
+        <input type="text" id="firstName" name="firstName" [(ngModel)]="customer.firstName" required>
+      </div>
+      <div>
+        <label for="surname">Surname:</label>
+        <input type="text" id="surname" name="surname" [(ngModel)]="customer.surname" required>
+      </div>
+      <div>
+        <label for="mobile">Mobile:</label>
+        <input type="text" id="mobile" name="mobile" [(ngModel)]="customer.mobile" required>
+      </div>
+      <div>
+        <label for="email">Email Address:</label>
+        <input type="email" id="email" name="email" [(ngModel)]="customer.emailAddress" required>
+      </div>
+      <div>
+        <label for="addressLine1">Address Line 1:</label>
+        <input type="text" id="addressLine1" name="addressLine1" [(ngModel)]="customer.homeAddress.addressLine1" required>
+      </div>
+      <div>
+        <label for="town">Town:</label>
+        <input type="text" id="town" name="town" [(ngModel)]="customer.homeAddress.town" required>
+      </div>
+      <div>
+        <label for="countyCity">County/City:</label>
+        <input type="text" id="countyCity" name="countyCity" [(ngModel)]="customer.homeAddress.countyCity" required>
+      </div>
+      <div>
+        <label for="eircode">Eircode:</label>
+        <input type="text" id="eircode" name="eircode" [(ngModel)]="customer.homeAddress.eircode" required>
+      </div>
+      <div class="purchaseHistory">
+        <h3>Purchase History</h3>
+        <ul>
+          <li *ngFor="let purchase of customer.purchaseHistory">
+            <span>Name: {{ purchase.phoneName }}</span>
+            <span class="priceDisplay">Price: {{ purchase.price }}</span>
+          </li>
+        </ul>
+        <button [routerLink]="['/addOrder', customer._id]"  type="submit">Add To Order History  (didnt have time to make this logic work)</button>
+      </div>
+      <button (click)="updateCustomer(customer)" type="submit">Upload</button>
+    </form>
+  </div>
+  

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Overview</title>
+  <style>
+    /* Styles for the content */
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      margin: 20px;
+    }
+    h2 {
+      color: #007bff;
+      margin-bottom: 10px;
+    }
+    p {
+      margin-bottom: 20px;
+    }
+    ul {
+      list-style-type: disc;
+      margin-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Technologies Used:</h2>
+  <ul>
+    <li>Frontend: Angular framework for building the user interface.</li>
+    <li>Backend: Express.js for building the RESTful API.</li>
+    <li>Database: MongoDB for storing phone and customer data.</li>
+  </ul>
+
+  <h2>Key Features:</h2>
+  <ul>
+    <li>Phone Catalog: Users can view a catalog of available phones, each with details like name, price, manufacturer, and image.</li>
+    <li>Customer Management: The system allows the management of customer information, including personal details, home and shipping addresses, and purchase history.</li>
+    <li>Customer Purchase History: Each customer has a purchase history that records the phones they have bought, including details like phone ID, name, and price.</li>
+    <li>Seeding Sample Data: Seed routes are provided to populate the database with sample phone and customer data for testing and development purposes.</li>
+    <li>Routing: Angular routing is used to navigate between different pages of the application, such as the home page, phone details page, and customer details page.</li>
+  </ul>
+
+  <h2>Implementation Details:</h2>
+  <ul>
+    <li>API Endpoints: Express.js is used to define API routes for fetching phone and customer data, as well as routes for seeding sample data into the database.</li>
+    <li>Data Models: Mongoose schemas are defined for the phone and customer data models, ensuring consistency and validation of data.</li>
+    <li>Angular Components: Angular components are created for different sections of the application, such as the home page, phone details page, customer list page, and customer details page.</li>
+    <li>Routing: Angular routing is configured to handle navigation between different components/pages of the application based on user actions.</li>
+  </ul>
+
+  <p>PS please note yes i had to configure the images locally, i had no idea how to place them into the database, i just placed the route on the database</p>
+  <p>if you need to re-seed the data please run "http://localhost:5001/api/customers/seed-customers" in the browser</p>
+  <p>or "http://localhost:5001/api/phones/seed-phones" to reseed the phones"</p>
+</body>
+</html>

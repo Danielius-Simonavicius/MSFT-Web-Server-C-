@@ -1,0 +1,21 @@
+<div *ngIf="phone" class="phone-details">
+    <h2>{{ phone.phoneName }}</h2>
+    <img [src]="phone.imageUrl" alt="{{ phone.phoneName }}" class="phone-image">
+    <div class="form-group">
+        <label for="name">Name:</label>
+        <input type="text" id="name" [(ngModel)]="phone.phoneName" class="form-control">
+    </div>
+    <div class="form-group">
+        <label for="manufacturer">Manufacturer:</label>
+        <input type="text" id="manufacturer" [(ngModel)]="phone.manufacturer" class="form-control">
+    </div>
+    <div class="form-group">
+        <label for="price">Price:</label>
+        <input type="number" id="price" [(ngModel)]="phone.price" class="form-control">
+    </div>
+    <div class="form-group">
+        <label for="stars">Stars:</label>
+        <input type="number" id="stars" [(ngModel)]="phone.stars" class="form-control">
+    </div>
+    <button (click)="updatePhone(phone)" class="btn btn-primary">Update</button>
+</div>

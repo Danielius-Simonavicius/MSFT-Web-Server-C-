@@ -1,6 +1,10 @@
 <div class="left-section">
   <h2 class="content-block">Admin Panel</h2>
   <form class="uploadForm" #websiteUpload="ngForm" (ngSubmit)="onSubmit()" novalidate>
+    <input type="text" name="WebsiteName" placeholder="WebsiteName" [(ngModel)]="dataFields.WebsiteName" required>
+    <div *ngIf="websiteUpload.submitted && websiteUpload.controls['WebsiteName'].errors?.['required']" class="error-message">
+      WebsiteName is required.
+    </div>
     <input type="text" name="allowedHosts" placeholder="AllowedHosts" [(ngModel)]="dataFields.allowedHosts" required>
     <div *ngIf="websiteUpload.submitted && websiteUpload.controls['allowedHosts'].errors?.['required']" class="error-message">
       AllowedHosts is required.

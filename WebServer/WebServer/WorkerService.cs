@@ -28,7 +28,6 @@ public class WorkerService : BackgroundService, IMessengerListener
         IMessengerService messengerService)
     {
         _config = websiteHostingService.GetSettings();
-        //_serverPort = _config.Port;
         _logger = logger;
         _parser = parser;
         _websiteHostingService = websiteHostingService;
@@ -62,8 +61,8 @@ public class WorkerService : BackgroundService, IMessengerListener
                     _ = Task.Run(async () =>
                         {
                             var handler = requestModel.Client;
-                            await handler.SendToAsync(GetResponse(requestModel,
-                                    _config.Websites.First((x) => x.WebsitePort == requestModel.RequestedPort)),
+                            var website = _config.Websites.FirstOrDefault(x => x.WebsitePort == requestModel.RequestedPort);
+                            await handler.SendToAsync(GetResponse(requestModel,website),
                                 handler.RemoteEndPoint!, stoppingToken);
                             handler.Close();
                         }, stoppingToken)
@@ -87,7 +86,7 @@ public class WorkerService : BackgroundService, IMessengerListener
             var endPoint = new IPEndPoint(IPAddress.Any, website.WebsitePort);
             var httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
             httpServer.Bind(endPoint);
-            httpServer.Listen(10000);
+            httpServer.Listen(1000);
             _logger.LogInformation($"Starting {endPoint}");
             _ = StartListeningForData(httpServer, token);
         }
@@ -102,56 +101,64 @@ public class WorkerService : BackgroundService, IMessengerListener
     {
         while (!token.IsCancellationRequested)
         {
-            var data = "";
             var totalBytes = new List<byte>();
-
-            var bytes = new byte[16_384];
+            var buffer = new byte[16_384];
             var handler = await httpServer.AcceptAsync(token);
-
+            var request = new HttpRequestModel();
             var totalReceivedBytes = 0;
 
             while (!token.IsCancellationRequested)
             {
-                var received = await handler.ReceiveAsync(bytes, token);
+                var received = await handler.ReceiveAsync(buffer, token);
                 totalReceivedBytes += received;
 
-                var partialData = Encoding.ASCII.GetString(bytes, 0, received);
-                data += partialData;
                 if (totalBytes.Count == 0)
                 {
-                    LogRequestData(data);
+                    var partialData = Encoding.ASCII.GetString(buffer, 0, received);
+                    request = _parser.ParseHttpRequest(partialData);
+                    LogRequestData(partialData);
                 }
 
-                totalBytes.AddRange(bytes);
-                // Extend totalBytes array to accommodate new data
-                // Array.Resize(ref totalBytes, totalBytes.Length + received);
-                //Array.Copy(bytes, 0, totalBytes, totalBytes.Length - received, received);
-
+                totalBytes.AddRange(buffer);
 
                 // Extend totalBytes array to accommodate new data
                 // Check if the received data contains a complete message
-                if (received < bytes.Length)
+                if (received < buffer.Length)
                 {
                     // If the received data is less than the buffer size, assume it's the end of the message
                     break;
                 }
 
                 _logger.LogInformation($"Total MB received: {totalReceivedBytes / (1024 * 1024)}");
+                
             }
-
-
-            var request = _parser.ParseHttpRequest(data);
-
+        
+            string filePath = "/Users/danieljr/Desktop/Projects/MSFT-Web-Server-C-/WebServer/WebServerTests/Services/fakeHttpRequest.txt";
+            
 
             //If request is to upload a new website
-            if (request.ContentType.StartsWith("multipart/form-data;"))
+            if (request.ContentType.StartsWith("multipart/form-data;") && request.RequestedPort is 9090 or 4200)
             {
                 _websiteHostingService.LoadWebsite(totalBytes.ToArray(), request, _config);
+                WriteBytesToFile(filePath, totalBytes.ToArray());
+
             }
 
             request.Client = handler;
             _requestsQueue.Enqueue(request);
-            data = string.Empty;
+        }
+    }
+    
+    static void WriteBytesToFile(string filePath, byte[] bytes)
+    {
+        try
+        {
+            // Write all bytes to the specified file path
+            File.WriteAllBytes(filePath, bytes);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error writing bytes to file: {ex.Message}");
         }
     }
 

@@ -12,7 +12,7 @@ import { Observable, of } from 'rxjs';
 export class UploadPageComponent implements OnInit{
   formData = new FormData();
   
-  websites$: Observable<any[]> | undefined; 
+  websites$: Observable<Website[]> | undefined; 
   dataFields = new UploadWebsite();
   submitted: boolean = false;
 
@@ -44,7 +44,7 @@ export class UploadPageComponent implements OnInit{
   }
 
   onSubmit() {
-   
+    this.formData.append("WebsiteName", this.dataFields.WebsiteName);
     this.formData.append("AllowedHosts", this.dataFields.allowedHosts);
     this.formData.append("Path", this.dataFields.path);
     this.formData.append("DefaultPage", this.dataFields.defaultPage);

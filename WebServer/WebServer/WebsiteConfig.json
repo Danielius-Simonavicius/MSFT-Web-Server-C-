@@ -13,28 +13,28 @@
       "AllowedHosts": "*",
       "DefaultPage": "index.html",
       "Path": "XtraceLoginPage",
-      "WebsitePort": 8089
+      "WebsitePort": 9091
     },
     {
       "WebsiteName": "MehirsLoginPage",
       "AllowedHosts": "*",
       "DefaultPage": "index.html",
       "Path": "MehirsLoginPage",
-      "WebsitePort": 8085
+      "WebsitePort": 9092
     },
     {
       "WebsiteName": "DoriansWebsite",
       "AllowedHosts": "*",
       "DefaultPage": "index.html",
       "Path": "DorianWebsite",
-      "WebsitePort": 8086
+      "WebsitePort": 9093
     },
     {
-      "WebsiteName": "Assignment5",
+      "WebsiteName": "",
       "AllowedHosts": "*",
       "DefaultPage": "index.html",
-      "Path": "frontend",
-      "WebsitePort": 9091
+      "Path": "910610e0-3d31-43cf-8054-420bbdfd8805/frontend",
+      "WebsitePort": 8000
     }
   ]
 }

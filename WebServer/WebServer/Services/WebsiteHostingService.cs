@@ -15,6 +15,10 @@ public class WebsiteHostingService: IWebsiteHostingService
     private readonly string jsonFilePath = "./WebsiteConfig.json";
 
     private readonly IMessengerService _messengerService;
+    
+    public WebsiteHostingService()
+    {
+    }
     public WebsiteHostingService(ILogger<WebsiteHostingService> logger,
         IMessengerService messengerService)
     {
@@ -26,33 +30,31 @@ public class WebsiteHostingService: IWebsiteHostingService
         // Split the byte array by ------Webkitboundary
        var parsedResult =  ParseUploadData(data, request.ContentType);
 
-        //If extracting file was successful start new connection thread
-        if (ExtractAndUnzipWebsiteFile(parsedResult.FileContent, 
-                config, parsedResult.UniqueFolderName))
+        //If extracting file wasn't successful, dont add to WebsiteConfig.json
+        if (!ExtractAndUnzipWebsiteFile(parsedResult.FileContent,
+                config, parsedResult.UniqueFolderName)) return;
+        try
         {
-            try
-            {
-                var serverConfig = this.GetSettings();
-                // Access the "Websites" array within the ServerConfig
-                var websites = serverConfig.Websites;
+            var serverConfig = this.GetSettings();
+            // Access the "Websites" array within the ServerConfig
+            var websites = serverConfig.Websites;
 
-                // Add the new website configuration to the array
-                websites?.Add(parsedResult.NewWebsite);
+            // Add the new website configuration to the array
+            websites?.Add(parsedResult.NewWebsite);
 
-                // Serialize the updated ServerConfig object back to JSON
-                var updatedJson = JsonConvert.SerializeObject(serverConfig, Formatting.Indented);
+            // Serialize the updated ServerConfig object back to JSON
+            var updatedJson = JsonConvert.SerializeObject(serverConfig, Formatting.Indented);
 
-                // Write the updated JSON back to the file
-                File.WriteAllText(jsonFilePath, updatedJson);
+            // Write the updated JSON back to the file
+            File.WriteAllText(jsonFilePath, updatedJson);
                 
-                _messengerService.SendNewWebsiteEvent(parsedResult.NewWebsite);
+            _messengerService.SendNewWebsiteEvent(parsedResult.NewWebsite);
                 
-            }
-            catch (Exception e)
-            {
-                _logger.LogCritical(e, null);
-                throw;
-            }
+        }
+        catch (Exception e)
+        {
+            _logger.LogCritical(e, null);
+            throw;
         }
     }
 
@@ -67,18 +69,21 @@ public class WebsiteHostingService: IWebsiteHostingService
 
         //Splitting upload data into parts by the boundry (0 is header, 1 in file content, 2 and onwards is part of form data object)
         var parts = SplitByteArray(data, delimiter);
-        var stringParts = parts.ConvertAll(bytes => Encoding.ASCII.GetString(bytes)).ToArray();
+        //var stringParts = parts.ConvertAll(bytes => Encoding.ASCII.GetString(bytes)).ToArray();
 
         //This removes the filecontents header
         result.FileContent = ExtractFileContent(parts[1]);
         result.UniqueFolderName = Guid.NewGuid().ToString();
         result.NewWebsite = new WebsiteConfigModel
         {
+            WebsiteName = ExtractValue("WebsiteName"),
             AllowedHosts = ExtractValue("AllowedHosts"),
             Path = $"{result.UniqueFolderName}/{ExtractValue("Path")}",
             DefaultPage = ExtractValue("DefaultPage"),
             WebsitePort = FindAvailablePort()
         };
+
+        return result;
 
         string ExtractValue(string key)
         {
@@ -88,8 +93,6 @@ public class WebsiteHostingService: IWebsiteHostingService
 
             return _match.Groups[1].Value;
         }
-
-        return result;
     }
 
     public ServerConfigModel GetSettings()

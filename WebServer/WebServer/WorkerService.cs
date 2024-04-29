@@ -111,7 +111,7 @@ public class WorkerService : BackgroundService
     private async Task ProcessClientAsync(TcpClient client, CancellationToken token)
     {
         X509Certificate2 serverCertificate = new X509Certificate2(
-            "/Users/danieljr/Desktop/Projects/MSFT-Web-Server-C-/WebServer/WebServer/certificates/MSFTServer.pfx",
+            "./certificates/MSFTServer.pfx",
             "microsoftProject");
 
         using (SslStream sslStream = new SslStream(client.GetStream(), false))

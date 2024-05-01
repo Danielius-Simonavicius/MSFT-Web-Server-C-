@@ -76,6 +76,7 @@ public class WebsiteHostingService: IWebsiteHostingService
         result.UniqueFolderName = Guid.NewGuid().ToString();
         result.NewWebsite = new WebsiteConfigModel
         {
+            WebsiteId = result.UniqueFolderName,
             WebsiteName = ExtractValue("WebsiteName"),
             AllowedHosts = ExtractValue("AllowedHosts"),
             Path = $"{result.UniqueFolderName}/{ExtractValue("Path")}",

@@ -1,4 +1,5 @@
 export class Website {
+    WebsiteId!:string;
     WebsiteName!: string;
     AllowedHosts!: string;
     DefaultPage!: string;

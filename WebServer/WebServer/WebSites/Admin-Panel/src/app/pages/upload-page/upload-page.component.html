@@ -1,6 +1,6 @@
 <div class="left-section">
   <h2 class="content-block">Admin Panel</h2>
-  <form class="uploadForm" #websiteUpload="ngForm" (ngSubmit)="onSubmit()" novalidate>
+  <form class="uploadForm" #websiteUpload="ngForm" (ngSubmit)="onSubmit(websiteUpload)" novalidate>
     <input type="text" name="WebsiteName" placeholder="WebsiteName" [(ngModel)]="dataFields.WebsiteName" required>
     <div *ngIf="websiteUpload.submitted && websiteUpload.controls['WebsiteName'].errors?.['required']" class="error-message">
       WebsiteName is required.
@@ -21,9 +21,6 @@
     </div>
 
     <input type="file" accept=".zip,.rar,.7zip" name="folder" (change)="onFolderSelected($event)" required>
-    <div *ngIf="websiteUpload.submitted && websiteUpload.controls['folder'].errors?.['required']" class="error-message">
-      Folder is required.
-    </div>
 
     <button type="submit">Upload</button>
   </form>
@@ -56,6 +53,7 @@
       <h2>{{ website.WebsiteName }}</h2>
       <p>Path: {{website.Path}}</p>
       <p>Allowed Hosts: {{ website.AllowedHosts }}</p>
+      <button (click)="deleteWebsite(website.WebsiteId)">Delete</button> <!-- Add delete button here -->
     </div>
     <div class="website-details">
       <p>Default Page: {{ website.DefaultPage }}</p>

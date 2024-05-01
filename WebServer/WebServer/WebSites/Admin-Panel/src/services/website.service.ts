@@ -18,4 +18,8 @@ export class WebsiteService {
   getAllWebsites(): Observable<Website[]> {
     return this.http.get<Website[]>(`${environment.apiUrl}/api/getWebsitesList`);
   }
+
+  deleteWebsite(WebsiteId: string) {
+    return this.http.delete(`${environment.apiUrl}/api/delete/website/${WebsiteId}`);
+  }
 }

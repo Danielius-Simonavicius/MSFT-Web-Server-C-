@@ -180,5 +180,13 @@
       <_ContentIncludedByDefault Remove="WebSites\49402781-0620-4b7b-acaf-955fba4cd62f\Assingment5CS230\backend\package-lock.json" />
       <_ContentIncludedByDefault Remove="WebSites\49402781-0620-4b7b-acaf-955fba4cd62f\Assingment5CS230\backend\package.json" />
       <_ContentIncludedByDefault Remove="WebSites\49402781-0620-4b7b-acaf-955fba4cd62f\Assingment5CS230\backend\tsconfig.json" />
+      <_ContentIncludedByDefault Remove="WebSites\49402781-0620-4b7b-acaf-955fba4cd62f\frontend\angular.json" />
+      <_ContentIncludedByDefault Remove="WebSites\49402781-0620-4b7b-acaf-955fba4cd62f\frontend\package-lock.json" />
+      <_ContentIncludedByDefault Remove="WebSites\49402781-0620-4b7b-acaf-955fba4cd62f\frontend\package.json" />
+      <_ContentIncludedByDefault Remove="WebSites\49402781-0620-4b7b-acaf-955fba4cd62f\frontend\tsconfig.app.json" />
+      <_ContentIncludedByDefault Remove="WebSites\49402781-0620-4b7b-acaf-955fba4cd62f\frontend\tsconfig.json" />
+      <_ContentIncludedByDefault Remove="WebSites\49402781-0620-4b7b-acaf-955fba4cd62f\frontend\tsconfig.spec.json" />
+      <_ContentIncludedByDefault Remove="WebSites\ReactAppBuild\asset-manifest.json" />
+      <_ContentIncludedByDefault Remove="WebSites\ReactAppBuild\manifest.json" />
     </ItemGroup>
 </Project>

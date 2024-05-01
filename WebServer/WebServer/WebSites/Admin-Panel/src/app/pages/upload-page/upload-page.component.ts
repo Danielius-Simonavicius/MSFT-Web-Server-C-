@@ -3,6 +3,7 @@ import { WebsiteService } from 'src/services/website.service';
 import { UploadWebsite } from 'src/models/upload-website.model';
 import { Website } from 'src/models/website-list.model';
 import { Observable, of } from 'rxjs';
+import { NgForm } from '@angular/forms';
 
 @Component({
   selector: 'app-upload-page',
@@ -43,22 +44,37 @@ export class UploadPageComponent implements OnInit{
     }
   }
 
-  onSubmit() {
-    this.formData.append("WebsiteName", this.dataFields.WebsiteName);
-    this.formData.append("AllowedHosts", this.dataFields.allowedHosts);
-    this.formData.append("Path", this.dataFields.path);
-    this.formData.append("DefaultPage", this.dataFields.defaultPage);
-    this.websiteService.uploadWebsite(this.formData).subscribe(
-      response => {
-        console.log('Upload successful:', response);
-        this.submitted = true;
-        window.location.reload();
+  onSubmit(form: NgForm) {
+    if(form.valid){
+      this.formData.append("WebsiteName", this.dataFields.WebsiteName);
+      this.formData.append("AllowedHosts", this.dataFields.allowedHosts);
+      this.formData.append("Path", this.dataFields.path);
+      this.formData.append("DefaultPage", this.dataFields.defaultPage);
+      this.websiteService.uploadWebsite(this.formData).subscribe(
+        response => {
+          console.log('Upload successful:', response);
+          this.submitted = true;
+          this.loadList();
+        },
+        error => {
+          console.error('Error uploading:', error);
+          this.loadList();
+        }
+      );
+      this.submitted = true;
+    }
+  }
+
+  deleteWebsite(WebsiteId: string) {
+    this.websiteService.deleteWebsite(WebsiteId).subscribe({
+      next: () => {
+        // Optionally display a message or handle the UI update
+        console.log('Website deleted successfully');
+        this.loadList();
       },
-      error => {
-        console.error('Error uploading:', error);
-        window.location.reload();
+      error: (error: any) => {
+        console.error('Error deleting the website:', error);
       }
-    );
-    this.submitted = true;
+    });
   }
 }

@@ -2,6 +2,7 @@
   "RootFolder": "./WebSites",
   "Websites": [
     {
+      "WebsiteId": "bbaa6ed2-7583-43de-b911-fbc5e7464679",
       "WebsiteName": "AdminPanel",
       "AllowedHosts": "*",
       "DefaultPage": "index.html",
@@ -9,6 +10,7 @@
       "WebsitePort": 9090
     },
     {
+      "WebsiteId": "f3d5e761-9d7f-4d6f-94f7-03d4e3a050e4",
       "WebsiteName": "XtraceLoginPage",
       "AllowedHosts": "*",
       "DefaultPage": "index.html",
@@ -16,6 +18,7 @@
       "WebsitePort": 9091
     },
     {
+      "WebsiteId": "abe20501-ee45-44ed-aa7b-ed5b4c94d795",
       "WebsiteName": "MehirsLoginPage",
       "AllowedHosts": "*",
       "DefaultPage": "index.html",
@@ -23,18 +26,12 @@
       "WebsitePort": 9092
     },
     {
+      "WebsiteId": "d114c0a0-7d95-4fd1-97df-9427ced9e62c",
       "WebsiteName": "DoriansWebsite",
       "AllowedHosts": "*",
       "DefaultPage": "index.html",
       "Path": "DorianWebsite",
       "WebsitePort": 9093
-    },
-    {
-      "WebsiteName": "",
-      "AllowedHosts": "*",
-      "DefaultPage": "index.html",
-      "Path": "49402781-0620-4b7b-acaf-955fba4cd62f/frontend/dist/frontend",
-      "WebsitePort": 8000
     }
   ]
 }

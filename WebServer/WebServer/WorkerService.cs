@@ -13,14 +13,15 @@ public class WorkerService : BackgroundService, IMessengerListener
     private readonly ServerConfigModel _config;
     private readonly ILogger<WorkerService> _logger;
 
-    private readonly ConcurrentQueue<HttpRequestModel> _requestsQueue = new();
+    //Website Threads along with their should stop paramater
+    private Dictionary<string, (Thread thread, bool shouldStop)> _websiteThreads =
+        new Dictionary<string, (Thread, bool)>();
 
+    private readonly ConcurrentQueue<HttpRequestModel> _requestsQueue = new();
     private readonly IHttpRequestParser _parser;
     private CancellationToken _cancellationToken;
-
-
     private readonly IMessengerService _messengerService;
-    public readonly IWebsiteHostingService _websiteHostingService;
+    public readonly IWebsiteHostingService WebsiteHostingService;
 
     public WorkerService(ILogger<WorkerService> logger,
         IHttpRequestParser parser,
@@ -30,7 +31,7 @@ public class WorkerService : BackgroundService, IMessengerListener
         _config = websiteHostingService.GetSettings();
         _logger = logger;
         _parser = parser;
-        _websiteHostingService = websiteHostingService;
+        WebsiteHostingService = websiteHostingService;
         _messengerService = messengerService;
     }
 
@@ -42,8 +43,10 @@ public class WorkerService : BackgroundService, IMessengerListener
 
         foreach (var website in websites)
         {
-            var _thread = new Thread(() => ConnectionThreadMethod(website, _cancellationToken));
-            _thread.Start();
+            bool shouldStop = false;
+            var thread = new Thread(() => ConnectionThreadMethod(website, shouldStop));
+            thread.Start();
+            _websiteThreads[website.Path] = (thread, shouldStop);
         }
     }
 
@@ -56,19 +59,19 @@ public class WorkerService : BackgroundService, IMessengerListener
         {
             try
             {
-                if (_requestsQueue.TryDequeue(out var requestModel) && requestModel.Client != null)
-                {
-                    _ = Task.Run(async () =>
-                        {
-                            var handler = requestModel.Client;
-                            var website = _config.Websites.FirstOrDefault(x => x.WebsitePort == requestModel.RequestedPort);
-                            await handler.SendToAsync(GetResponse(requestModel,website),
-                                handler.RemoteEndPoint!, stoppingToken);
-                            handler.Close();
-                        }, stoppingToken)
-                        .ContinueWith(t => _logger.LogCritical(t.Exception, null),
-                            TaskContinuationOptions.OnlyOnFaulted);
-                }
+                if (!_requestsQueue.TryDequeue(out var requestModel) || requestModel.Client == null) continue;
+                _ = Task.Run(async () =>
+                    {
+                        var handler = requestModel.Client;
+                        var website =
+                            _config.Websites.FirstOrDefault(x => x.WebsitePort == requestModel.RequestedPort);
+                        await handler.SendToAsync(GetResponse(requestModel, website),
+                            handler.RemoteEndPoint!, stoppingToken);
+                        handler.Close();
+                    }, stoppingToken)
+                    .ContinueWith(t => _logger.LogCritical(t.Exception, null),
+                        TaskContinuationOptions.OnlyOnFaulted);
+                Console.WriteLine($"website threads running:{_websiteThreads.Count}");
             }
             catch (Exception ex)
             {
@@ -79,7 +82,7 @@ public class WorkerService : BackgroundService, IMessengerListener
         _messengerService.RemoveWebSiteAddedListener(this);
     }
 
-    private void ConnectionThreadMethod(WebsiteConfigModel website, CancellationToken token)
+    private void ConnectionThreadMethod(WebsiteConfigModel website, bool shouldStop)
     {
         try
         {
@@ -88,7 +91,7 @@ public class WorkerService : BackgroundService, IMessengerListener
             httpServer.Bind(endPoint);
             httpServer.Listen(1000);
             _logger.LogInformation($"Starting {endPoint}");
-            _ = StartListeningForData(httpServer, token);
+            _ = StartListeningForData(httpServer, shouldStop);
         }
         catch (Exception ex)
         {
@@ -97,19 +100,19 @@ public class WorkerService : BackgroundService, IMessengerListener
         }
     }
 
-    private async Task StartListeningForData(Socket httpServer, CancellationToken token)
+    private async Task StartListeningForData(Socket httpServer, bool shouldStop)
     {
-        while (!token.IsCancellationRequested)
+        while (!shouldStop || !_cancellationToken.IsCancellationRequested)
         {
             var totalBytes = new List<byte>();
             var buffer = new byte[16_384];
-            var handler = await httpServer.AcceptAsync(token);
+            var handler = await httpServer.AcceptAsync(_cancellationToken);
             var request = new HttpRequestModel();
             var totalReceivedBytes = 0;
 
-            while (!token.IsCancellationRequested)
+            while (!shouldStop || !_cancellationToken.IsCancellationRequested)
             {
-                var received = await handler.ReceiveAsync(buffer, token);
+                var received = await handler.ReceiveAsync(buffer, _cancellationToken);
                 totalReceivedBytes += received;
 
                 if (totalBytes.Count == 0)
@@ -121,7 +124,6 @@ public class WorkerService : BackgroundService, IMessengerListener
 
                 totalBytes.AddRange(buffer);
 
-                // Extend totalBytes array to accommodate new data
                 // Check if the received data contains a complete message
                 if (received < buffer.Length)
                 {
@@ -130,99 +132,111 @@ public class WorkerService : BackgroundService, IMessengerListener
                 }
 
                 _logger.LogInformation($"Total MB received: {totalReceivedBytes / (1024 * 1024)}");
-                
             }
-        
-      
+
             //If request is to upload a new website
             if (request.ContentType.StartsWith("multipart/form-data;") && request.RequestedPort is 9090 or 4200)
             {
-                _websiteHostingService.LoadWebsite(totalBytes.ToArray(), request, _config);
-
+                WebsiteHostingService.LoadWebsite(totalBytes.ToArray(), request, _config);
             }
 
             request.Client = handler;
             _requestsQueue.Enqueue(request);
         }
     }
-    
+
 
     private byte[] GetResponse(HttpRequestModel requestModel, WebsiteConfigModel website)
     {
-        var statusCode = "200 OK";
-        var fileName = requestModel.Path; // File path e.g. "/styles-XHU57CVJ.css"
-        var methodType = requestModel.RequestType; // Request type e.g. GET, PUT, POST, DELETE
-        var webSite = website.Path;
-
-        //Re-routing to default page in website
-        if (string.IsNullOrEmpty(fileName) || fileName.Equals("/"))
-        {
-            fileName = website.DefaultPage; // fileName = "index.html"
-        }
-        //Otherwise gets filename client wants 
-        else if (fileName.StartsWith($"/"))
-        {
-            fileName = fileName.Substring(1);
-        }
-
-
-        var rootFolder = _config.RootFolder;
-
-        var requestedFile = Path.Combine(rootFolder, webSite, fileName);
+        const string statusCode = "200 OK";
+        string fileName = NormalizeFileName(requestModel.Path, website.DefaultPage);
+        string methodType = requestModel.RequestType;
+        string requestedFile = Path.Combine(_config.RootFolder, website.Path, fileName);
 
         switch (methodType)
         {
             case "GET" when fileName.Equals("api/getWebsitesList"):
-                var responseHeader =
-                    $"HTTP/1.1 {statusCode}\r\n" +
-                    "Server: Microsoft_web_server\r\n" +
-                    "Content-Type: application/json; charset=UTF-8\r\n" +
-                    $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n\r\n";
-
-                var serverConfig = _websiteHostingService.GetSettings();
-                var websites = serverConfig.Websites;
-
-                // Convert the websites list to JSON
-                var websiteBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(websites));
-                var resData1 = Encoding.ASCII.GetBytes(responseHeader).Concat(websiteBytes);
-                return resData1.ToArray();
-
-            case "POST" when fileName.Equals("api/uploadWebsite"):
-            {
-                responseHeader =
-                    $"HTTP/1.1 {statusCode}\r\n" +
-                    "Server: Microsoft_web_server\r\n" +
-                    $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n\r\n";
-
-                var responseData = Encoding.ASCII.GetBytes(responseHeader);
-                return responseData.ToArray();
-            }
+                return HandleGetRequest(fileName, website, statusCode);
+            case "POST":
+                return HandlePostRequest(fileName, website, statusCode);
+            case "DELETE":
+                return HandleDeleteRequest(fileName, website, statusCode);
             case "OPTIONS":
                 return OptionsResponse(website);
         }
 
-
-        // File doesn't exist, return 404 Not Found
         if (!File.Exists(requestedFile))
         {
             Console.WriteLine($"File not found: {requestedFile}");
             return NotFound404(website);
         }
 
+        return ServeFile(requestedFile, website, statusCode);
+    }
 
-        var file = File.ReadAllBytes(requestedFile);
+    private string NormalizeFileName(string fileName, string defaultPage)
+    {
+        if (string.IsNullOrEmpty(fileName) || fileName.Equals("/"))
+            return defaultPage;
 
+        return fileName.TrimStart('/');
+    }
 
-        var contentType = FindContentType(requestedFile);
+    private byte[] HandleGetRequest(string fileName, WebsiteConfigModel website, string statusCode)
+    {
+        if (fileName.Equals("api/getWebsitesList"))
+        {
+            var responseHeader = BuildHeader(statusCode, "application/json; charset=UTF-8", website);
+            var websites = WebsiteHostingService.GetSettings().Websites;
+            var websiteBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(websites));
+            return Encoding.ASCII.GetBytes(responseHeader).Concat(websiteBytes).ToArray();
+        }
 
-        var resHeader =
-            $"HTTP/1.1 {statusCode}\r\n" +
-            "Server: Microsoft_web_server\r\n" +
-            $"Content-Type: {contentType}; charset=UTF-8\r\n" +
-            $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n\r\n";
+        return Array.Empty<byte>();
+    }
 
-        var resData = Encoding.ASCII.GetBytes(resHeader).Concat(file);
-        return resData.ToArray();
+    private byte[] HandlePostRequest(string fileName, WebsiteConfigModel website, string statusCode)
+    {
+        if (fileName.Equals("api/uploadWebsite"))
+        {
+            var responseHeader = BuildHeader(statusCode, null, website);
+            return Encoding.ASCII.GetBytes(responseHeader).ToArray();
+        }
+
+        return Array.Empty<byte>();
+    }
+
+    private byte[] ServeFile(string filePath, WebsiteConfigModel website, string statusCode)
+    {
+        var file = File.ReadAllBytes(filePath);
+        var contentType = FindContentType(filePath);
+        var responseHeader = BuildHeader(statusCode, $"{contentType}; charset=UTF-8", website);
+        return Encoding.ASCII.GetBytes(responseHeader).Concat(file).ToArray();
+    }
+
+    private string BuildHeader(string statusCode, string contentType, WebsiteConfigModel website)
+    {
+        var builder = new StringBuilder($"HTTP/1.1 {statusCode}\r\n")
+            .Append("Server: Microsoft_web_server\r\n");
+
+        if (contentType != null)
+        {
+            builder.Append($"Content-Type: {contentType}\r\n");
+        }
+
+        builder.Append($"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n\r\n");
+        return builder.ToString();
+    }
+
+    private byte[] HandleDeleteRequest(string fileName, WebsiteConfigModel website, string statusCode)
+    {
+        if (fileName.StartsWith("api/delete/website"))
+        {
+            var responseHeader = BuildHeader(statusCode, "application/json; charset=UTF-8", website);
+            return Encoding.ASCII.GetBytes(responseHeader).ToArray();
+        }
+
+        return Array.Empty<byte>();
     }
 
     private byte[] OptionsResponse(WebsiteConfigModel website)
@@ -231,8 +245,8 @@ public class WorkerService : BackgroundService, IMessengerListener
         string responseHeader =
             $"HTTP/1.1 {statusCode}\r\n" +
             "Server: Microsoft_web_server\r\n" +
-            "Allow: GET, POST, OPTIONS\r\n" +
-            "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n" +
+            "Allow: GET, POST, OPTIONS, DELETE\r\n" +
+            "Access-Control-Allow-Methods: GET, POST, OPTIONS, DELETE\r\n" +
             "Access-Control-Allow-Headers: Content-Type\r\n" +
             $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n" +
             "\r\n";
@@ -273,14 +287,30 @@ public class WorkerService : BackgroundService, IMessengerListener
         _logger.LogInformation($"\n{requestData}");
     }
 
+
     public void NewWebSiteAdded(WebsiteConfigModel website)
     {
-        var _thread = new Thread(
-            () => ConnectionThreadMethod(website, _cancellationToken));
-        _thread.Start();
+        bool shouldStop = false;
+        var thread = new Thread(() => { ConnectionThreadMethod(website, shouldStop); });
+        thread.Start();
+
+        // Add the thread and its stop flag to the dictionary
+        //using website.Path paramater as websites id
+        _websiteThreads[website.Path] = (thread, shouldStop);
     }
 
     public void WebSiteRemoved(WebsiteConfigModel website)
     {
+        if (_websiteThreads.TryGetValue(website.Path, out var threadInfo))
+        {
+            // Signal the thread to stop
+            _websiteThreads[website.Path] = (threadInfo.thread, true);
+
+            // Optionally wait for the thread to finish
+            threadInfo.thread.Join();
+
+            // Remove the thread from the dictionary
+            _websiteThreads.Remove(website.Path);
+        }
     }
 }

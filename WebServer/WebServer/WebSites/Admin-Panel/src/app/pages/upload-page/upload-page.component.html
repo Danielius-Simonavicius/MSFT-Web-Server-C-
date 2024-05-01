@@ -24,6 +24,15 @@
 
     <button type="submit">Upload</button>
   </form>
+
+  <div *ngIf="submitted">
+
+    <!-- <div class="progress">
+      <mat-progress-bar mode="indeterminate" value = "uploadProgress"></mat-progress-bar>
+    </div> -->
+  
+    <h3>Submitted Data:</h3>
+    {{websiteUpload.value | json }}
 </div>
 
 <!-- <div class = dropzone>
@@ -34,14 +43,6 @@
   <label for="fileDropRef">Browse for file</label>
 </div> -->
 
-<div *ngIf="submitted">
-
-  <!-- <div class="progress">
-    <mat-progress-bar mode="indeterminate" value = "uploadProgress"></mat-progress-bar>
-  </div> -->
-
-  <h3>Submitted Data:</h3>
-  {{websiteUpload.value | json }}
   <!-- <p>Name: {{ formData.name }}</p>
   <p>AllowedHosts: {{ formData.allowedHosts }}</p>
   <p>Path: {{ formData.path }}</p>
@@ -58,6 +59,10 @@
       <p>Default Page: {{ website.DefaultPage }}</p>
       <p>Website Port: {{ website.WebsitePort }}</p>
     </div>
-    <button (click)="deleteWebsite(website.WebsiteId)">Delete</button>
+    <button (click)="deleteWebsite(website.WebsiteId)" >Delete</button>
   </div>
 </div>
+
+
+<!-- 
+[routerLink]="['/upload-page', website.WebsiteId]" -->

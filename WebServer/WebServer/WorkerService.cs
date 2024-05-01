@@ -155,7 +155,11 @@ public class WorkerService(ILogger<WorkerService> logger,
         {
             // Signal the thread to stop
             _websiteThreads[website.WebsiteId] = (threadInfo.thread, true);
-
+            
+            //Delete website folder
+            var pathToWebsite = Path.Combine(_config.RootFolder, website.WebsiteId);
+            Directory.Delete(pathToWebsite,true);
+            
             // Optionally wait for the thread to finish
             threadInfo.thread.Join();
             //threadInfo.thread.Abort();

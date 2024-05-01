@@ -9,33 +9,31 @@ using static System.Text.RegularExpressions.Regex;
 
 namespace WebServer.Services;
 
-public class WebsiteHostingService: IWebsiteHostingService
+public class WebsiteHostingService : IWebsiteHostingService
 {
     private readonly ILogger<WebsiteHostingService> _logger;
     private readonly string jsonFilePath = "./WebsiteConfig.json";
 
     private readonly IMessengerService _messengerService;
-    
-    public WebsiteHostingService()
-    {
-    }
+
     public WebsiteHostingService(ILogger<WebsiteHostingService> logger,
         IMessengerService messengerService)
     {
         _logger = logger;
         _messengerService = messengerService;
     }
+
     public void LoadWebsite(byte[] data, HttpRequestModel request, ServerConfigModel config)
     {
         // Split the byte array by ------Webkitboundary
-       var parsedResult =  ParseUploadData(data, request.ContentType);
+        var parsedResult = ParseUploadData(data, request.ContentType);
 
         //If extracting file wasn't successful, dont add to WebsiteConfig.json
         if (!ExtractAndUnzipWebsiteFile(parsedResult.FileContent,
                 config, parsedResult.UniqueFolderName)) return;
         try
         {
-            var serverConfig = this.GetSettings();
+            var serverConfig = GetSettings();
             // Access the "Websites" array within the ServerConfig
             var websites = serverConfig.Websites;
 
@@ -43,13 +41,12 @@ public class WebsiteHostingService: IWebsiteHostingService
             websites?.Add(parsedResult.NewWebsite);
 
             // Serialize the updated ServerConfig object back to JSON
-            var updatedJson = JsonConvert.SerializeObject(serverConfig, Formatting.Indented);
+            var updatedConfig = JsonConvert.SerializeObject(serverConfig, Formatting.Indented);
 
             // Write the updated JSON back to the file
-            File.WriteAllText(jsonFilePath, updatedJson);
-                
+            File.WriteAllText(jsonFilePath, updatedConfig);
+
             _messengerService.SendNewWebsiteEvent(parsedResult.NewWebsite);
-                
         }
         catch (Exception e)
         {
@@ -98,11 +95,42 @@ public class WebsiteHostingService: IWebsiteHostingService
 
     public ServerConfigModel GetSettings()
     {
-        
         // Read JSON file contents into a string
         var jsonContent = File.ReadAllText(jsonFilePath);
         var serverConfig = JsonConvert.DeserializeObject<ServerConfigModel>(jsonContent);
         return serverConfig!;
+    }
+
+    public void RemoveWebsiteFromConfig(string websiteToRemoveId, out WebsiteConfigModel websiteRemoved)
+    {
+        // Read JSON file contents into a string
+        var serverConfig = GetSettings();
+
+        var index = -1;
+        for (var i = 0; i < serverConfig!.Websites.Count; i++)
+        {
+            if (serverConfig.Websites[i].WebsiteId == websiteToRemoveId)
+            {
+                index = i;
+                break;
+            }
+        }
+
+        if (index != -1)
+        {
+            websiteRemoved = serverConfig.Websites[index];
+            serverConfig.Websites.RemoveAt(index);
+
+            var updatedConfig = JsonConvert.SerializeObject(serverConfig, Formatting.Indented);
+
+            // Write the updated JSON back to the file
+            File.WriteAllText(jsonFilePath, updatedConfig);
+        }
+        else
+        {
+            _logger.LogCritical("Website ID not found");
+            websiteRemoved = null;
+        }
     }
 
     private bool ExtractAndUnzipWebsiteFile(byte[] zipData, ServerConfigModel config, string uniqueFolderName)
@@ -134,7 +162,7 @@ public class WebsiteHostingService: IWebsiteHostingService
         {
             return false; //failed to extract file
         }
-        
+
         return true;
     }
 

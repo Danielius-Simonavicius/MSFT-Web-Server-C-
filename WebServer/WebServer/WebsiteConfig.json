@@ -10,7 +10,7 @@
       "WebsitePort": 9090
     },
     {
-      "WebsiteId": "f3d5e761-9d7f-4d6f-94f7-03d4e3a050e4",
+      "WebsiteId": "70bf3eeb-6360-4e41-b399-543f39136afb",
       "WebsiteName": "XtraceLoginPage",
       "AllowedHosts": "*",
       "DefaultPage": "index.html",

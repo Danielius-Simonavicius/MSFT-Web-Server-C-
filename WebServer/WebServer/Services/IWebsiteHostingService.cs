@@ -8,4 +8,5 @@ public interface IWebsiteHostingService
 
     ParseResultModel? ParseUploadData(byte[] data, string contentType);
     ServerConfigModel GetSettings();
+    public void RemoveWebsiteFromConfig(string websiteToRemoveId,out WebsiteConfigModel websiteRemoved);
 }

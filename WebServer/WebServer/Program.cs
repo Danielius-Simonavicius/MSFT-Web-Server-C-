@@ -12,8 +12,10 @@ namespace WebServer
             var builder = Host.CreateApplicationBuilder();
 
             builder.Services.AddTransient<IHttpRequestParser, DefaultHttpParser>();
-            builder.Services.AddHostedService<WorkerService>();
             builder.Services.AddTransient<IWebsiteHostingService, WebsiteHostingService>();
+            
+            builder.Services.AddTransient<IGetResponseService, DefaultResponseService>();
+            builder.Services.AddHostedService<WorkerService>();
 
             builder.Services.AddSingleton<IMessengerService, MessengerService>();
             var configuration = new ConfigurationBuilder()

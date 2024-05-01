@@ -48,16 +48,16 @@
   <p>Default Page: {{ formData.defaultPage }}</p> -->
 </div>
 <div class="right-section">
-  <div *ngFor="let website of websites$ | async" class="website-card">
+  <div *ngFor="let website of websites$ | async" class="website-card" [routerLink]="['/edit-website', website.WebsiteId]">
     <div class="website-header">
       <h2>{{ website.WebsiteName }}</h2>
       <p>Path: {{website.Path}}</p>
       <p>Allowed Hosts: {{ website.AllowedHosts }}</p>
-      <button (click)="deleteWebsite(website.WebsiteId)">Delete</button> <!-- Add delete button here -->
     </div>
     <div class="website-details">
       <p>Default Page: {{ website.DefaultPage }}</p>
       <p>Website Port: {{ website.WebsitePort }}</p>
     </div>
+    <button (click)="deleteWebsite(website.WebsiteId)">Delete</button>
   </div>
 </div>

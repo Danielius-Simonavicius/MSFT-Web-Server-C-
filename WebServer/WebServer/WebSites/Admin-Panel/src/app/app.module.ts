@@ -7,11 +7,13 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { UploadPageComponent } from './pages/upload-page/upload-page.component';
+import { EditWebsiteComponent } from './pages/edit-website/edit-website.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    UploadPageComponent
+    UploadPageComponent,
+    EditWebsiteComponent
   ],
   imports: [
     BrowserModule,

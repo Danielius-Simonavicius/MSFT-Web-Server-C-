@@ -40,6 +40,14 @@
       "DefaultPage": "index.html",
       "Path": "MehirsLoginPage",
       "WebsitePort": 9092
+    },
+    {
+      "WebsiteId": "50e3909a-662b-4a5b-9aa9-d84e11fc25c6",
+      "WebsiteName": "shit",
+      "AllowedHosts": "shit4",
+      "DefaultPage": "index.html",
+      "Path": "50e3909a-662b-4a5b-9aa9-d84e11fc25c6/a",
+      "WebsitePort": 8000
     }
   ]
 }

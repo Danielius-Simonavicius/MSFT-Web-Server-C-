@@ -73,7 +73,12 @@ public class WorkerService : BackgroundService, IMessengerListener
                     {
                         var handler = requestModel.Client;
                         var website = _config.Websites.FirstOrDefault(x => x.WebsitePort == requestModel.RequestedPort);
-                        await handler.SendToAsync(_responseService.GetResponse(requestModel, website!, _config),
+                        if (website == null)
+                        {
+                            _logger.LogWarning("Got Request for invalid website on port {port}", requestModel.RequestedPort);
+                            return;
+                        }
+                        await handler.SendToAsync(_responseService.GetResponse(requestModel, website, _config),
                             handler.RemoteEndPoint!, stoppingToken);
                         handler.Close();
                     }, stoppingToken)
@@ -145,6 +150,7 @@ public class WorkerService : BackgroundService, IMessengerListener
             //If request is to upload a new website
             if (request.ContentType.StartsWith("multipart/form-data;") && request.RequestedPort is 9090 or 4200)
             {
+                _logger.LogInformation("request is to upload a new website");
                 WebsiteHostingService.LoadWebsite(totalBytes.ToArray(), request);
             }
 

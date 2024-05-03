@@ -10,13 +10,16 @@ public class DefaultResponseService : IGetResponseService
     private readonly IMessengerService _messengerService;
     private ServerConfigModel? _websitesConfigurations;
     private readonly IConfigurationService _configurationService;
+    private readonly ILogger _logger;
     public DefaultResponseService(IWebsiteHostingService websiteHostingService, 
         IMessengerService messengerService,
-        IConfigurationService configurationService)
+        IConfigurationService configurationService,
+        ILogger<DefaultResponseService> logger)
     {
         _websiteHostingService = websiteHostingService;
         _messengerService = messengerService;
         _configurationService = configurationService;
+        _logger = logger;
     }
 
     private bool LoadConfig()
@@ -53,7 +56,7 @@ public class DefaultResponseService : IGetResponseService
         
         if (!File.Exists(requestedFile))
         {
-            Console.WriteLine($"File not found: {requestedFile}");
+            _logger.LogInformation("File not found: {requestedFile}", requestedFile);
             return NotFound404(website);
         }
 
@@ -72,6 +75,7 @@ public class DefaultResponseService : IGetResponseService
     {
         if (fileName.Equals("api/admin/sites"))
         {
+            this.LoadConfig();
             var responseHeader = BuildHeader(statusCode, "application/json; charset=UTF-8", website);
             if (_websitesConfigurations == null)
             {

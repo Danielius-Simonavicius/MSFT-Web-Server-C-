@@ -2,40 +2,54 @@ using System.Collections.Concurrent;
 using System.Net.Sockets;
 using System.Net;
 using System.Text;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using WebServer.Models;
 using WebServer.Services;
 
 namespace WebServer;
 
-public class WorkerService(ILogger<WorkerService> logger,
-        IHttpRequestParser parser,
-        IWebsiteHostingService websiteHostingService,
-        IMessengerService messengerService,
-        IGetResponseService responseService)
-    : BackgroundService, IMessengerListener
+public class WorkerService : BackgroundService, IMessengerListener
 {
-    private readonly ServerConfigModel _config = websiteHostingService.GetSettings();
-
-    //Website Threads along with their should stop paramater
-    private Dictionary<string, (Thread thread, bool shouldStop)> _websiteThreads = new();
+ 
+    private Dictionary<string, CancellationTokenSource> _websiteThreads = new();
+    private readonly ServerConfigModel _config;
+    private readonly ILogger<WorkerService> _logger;
 
     private readonly ConcurrentQueue<HttpRequestModel> _requestsQueue = new();
-    private CancellationToken _cancellationToken;
-    public readonly IWebsiteHostingService WebsiteHostingService = websiteHostingService;
 
+    private readonly IHttpRequestParser _parser;
+    private CancellationToken _cancellationToken;
+    private readonly IGetResponseService _responseService;
+
+    private readonly IMessengerService _messengerService;
+    public readonly IWebsiteHostingService WebsiteHostingService;
+
+    public WorkerService(ILogger<WorkerService> logger,
+        IHttpRequestParser parser,
+        IWebsiteHostingService websiteHostingService,
+        IMessengerService messengerService, IGetResponseService responseService)
+    {
+        _config = websiteHostingService.GetSettings();
+        _logger = logger;
+        _parser = parser;
+        WebsiteHostingService = websiteHostingService;
+        _messengerService = messengerService;
+        _responseService = responseService;
+    }
 
     private void StartWebsites()
     {
-        messengerService.AddNewWebSiteAddedListener(this);
+        _messengerService.AddNewWebSiteAddedListener(this);
         var websites = _config.Websites;
 
         foreach (var website in websites)
         {
-            bool shouldStop = false;
-            var thread = new Thread(() => ConnectionThreadMethod(website, shouldStop));
+            var threadCancellationToken = new CancellationTokenSource();
+            var thread = new Thread(() => ConnectionThreadMethod(website, threadCancellationToken));
             thread.Start();
-            _websiteThreads[website.WebsiteId] = (thread, shouldStop);
+            //Adds to dictionary of threads
+            _websiteThreads[website.WebsiteId] = threadCancellationToken;
         }
     }
 
@@ -52,25 +66,25 @@ public class WorkerService(ILogger<WorkerService> logger,
                 _ = Task.Run(async () =>
                     {
                         var handler = requestModel.Client;
-                        var website =
-                            _config.Websites.FirstOrDefault(x => x.WebsitePort == requestModel.RequestedPort);
-                        await handler.SendToAsync(responseService.GetResponse(requestModel, website,_config), handler.RemoteEndPoint!, stoppingToken);
+                        var website = _config.Websites.FirstOrDefault(x => x.WebsitePort == requestModel.RequestedPort);
+                        await handler.SendToAsync(_responseService.GetResponse(requestModel, website!, _config),
+                            handler.RemoteEndPoint!, stoppingToken);
                         handler.Close();
                     }, stoppingToken)
-                    .ContinueWith(t => logger.LogCritical(t.Exception, null),
+                    .ContinueWith(t => _logger.LogCritical(t.Exception, null),
                         TaskContinuationOptions.OnlyOnFaulted);
-                logger.LogInformation($"\r\nwebsite threads running:{_websiteThreads.Count}");
+                _logger.LogInformation($"\r\nwebsite threads running:{_websiteThreads.Count}");
             }
             catch (Exception ex)
             {
-                logger.LogCritical(ex, null);
+                _logger.LogCritical(ex, null);
             }
         }
 
-        messengerService.RemoveWebSiteAddedListener(this);
+        _messengerService.RemoveWebSiteAddedListener(this);
     }
 
-    private void ConnectionThreadMethod(WebsiteConfigModel website, bool shouldStop)
+    private void ConnectionThreadMethod(WebsiteConfigModel website, CancellationTokenSource threadCancellationToken)
     {
         try
         {
@@ -78,19 +92,19 @@ public class WorkerService(ILogger<WorkerService> logger,
             var httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
             httpServer.Bind(endPoint);
             httpServer.Listen(1000);
-            logger.LogInformation($"Starting {endPoint}");
-            _ = StartListeningForData(httpServer, shouldStop);
+            _logger.LogInformation($"Starting {endPoint}");
+            _ = StartListeningForData(httpServer, threadCancellationToken);
         }
         catch (Exception ex)
         {
-            logger.LogCritical($"{website.Path} Server could not start: {ex.Message}");
-            logger.LogCritical(ex, null);
+            _logger.LogCritical($"{website.Path} Server could not start: {ex.Message}");
+            _logger.LogCritical(ex, null);
         }
     }
 
-    private async Task StartListeningForData(Socket httpServer, bool shouldStop)
+    private async Task StartListeningForData(Socket httpServer, CancellationTokenSource threadCancellationToken)
     {
-        while (!shouldStop || !_cancellationToken.IsCancellationRequested)
+        while (!threadCancellationToken.IsCancellationRequested)
         {
             var totalBytes = new List<byte>();
             var buffer = new byte[16_384];
@@ -98,7 +112,7 @@ public class WorkerService(ILogger<WorkerService> logger,
             var request = new HttpRequestModel();
             var totalReceivedBytes = 0;
 
-            while (!shouldStop || !_cancellationToken.IsCancellationRequested)
+            while (!threadCancellationToken.IsCancellationRequested)
             {
                 var received = await handler.ReceiveAsync(buffer, _cancellationToken);
                 totalReceivedBytes += received;
@@ -106,7 +120,7 @@ public class WorkerService(ILogger<WorkerService> logger,
                 if (totalBytes.Count == 0)
                 {
                     var partialData = Encoding.ASCII.GetString(buffer, 0, received);
-                    request = parser.ParseHttpRequest(partialData);
+                    request = _parser.ParseHttpRequest(partialData);
                     LogRequestData(partialData);
                 }
 
@@ -119,7 +133,7 @@ public class WorkerService(ILogger<WorkerService> logger,
                     break;
                 }
 
-                logger.LogInformation($"Total MB received: {totalReceivedBytes / (1024 * 1024)}");
+                _logger.LogInformation($"Total MB received: {totalReceivedBytes / (1024 * 1024)}");
             }
 
             //If request is to upload a new website
@@ -136,33 +150,32 @@ public class WorkerService(ILogger<WorkerService> logger,
     private void LogRequestData(string requestData)
     {
         var parts = requestData.Split("\r\n\r\n");
-        logger.LogInformation($"\n{parts[0]}");
+        _logger.LogInformation($"\n{parts[0]}");
     }
 
     public void NewWebSiteAdded(WebsiteConfigModel website)
     {
-        bool shouldStop = false;
-        var thread = new Thread(() => ConnectionThreadMethod(website, shouldStop));
+        var threadCancellationToken = new CancellationTokenSource();
+        var thread = new Thread(() => ConnectionThreadMethod(website, threadCancellationToken));
         thread.Start();
 
         // Add the thread and its stop flag to the dictionary
-        _websiteThreads[website.WebsiteId] = (thread, shouldStop);
+        _websiteThreads[website.WebsiteId] = threadCancellationToken;
     }
 
     public void WebSiteRemoved(WebsiteConfigModel website)
     {
-        if (_websiteThreads.TryGetValue(website.WebsiteId, out var threadInfo))
+        if (_websiteThreads.TryGetValue(website.WebsiteId, out var cancellationToken))
         {
             // Signal the thread to stop
-            _websiteThreads[website.WebsiteId] = (threadInfo.thread, true);
+            cancellationToken.Cancel();
+            _websiteThreads.TryGetValue(website.WebsiteId, out var threadInfo);
             
             //Delete website folder
             var pathToWebsite = Path.Combine(_config.RootFolder, website.WebsiteId);
-            Directory.Delete(pathToWebsite,true);
-            
-            // Optionally wait for the thread to finish
-            threadInfo.thread.Join();
-            //threadInfo.thread.Abort();
+            Directory.Delete(pathToWebsite, true);
+
+
             // Remove the thread from the dictionary
             _websiteThreads.Remove(website.WebsiteId);
         }

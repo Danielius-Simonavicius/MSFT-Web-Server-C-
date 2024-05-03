@@ -4,5 +4,5 @@ namespace WebServer.Services;
 
 public interface IGetResponseService
 {
-    byte[] GetResponse(HttpRequestModel requestModel, WebsiteConfigModel website, ServerConfigModel config);
+    byte[] GetResponse(HttpRequestModel requestModel, WebsiteConfigModel website, ServerConfigModel configModel);
 }

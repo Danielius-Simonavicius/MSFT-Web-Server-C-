@@ -35,7 +35,12 @@ export class WebsiteService {
     );
   }
 
-  updateWesbite(website: Website){
-
+  updateWebsite(website: Website) {
+    console.log("posted");
+    return this.http.put(
+      `${environment.apiUrl}/api/update/website/${website.WebsiteId}`,
+      website
+    );
   }
+  
 }

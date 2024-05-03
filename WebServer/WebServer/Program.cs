@@ -2,6 +2,7 @@ using WebServer;
 using WebServer.Models;
 using WebServer.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace WebServer
 {
@@ -22,10 +23,11 @@ namespace WebServer
                 .AddJsonFile("WebsiteConfig.json", optional: false,
                     reloadOnChange: true) 
                 .Build();
-
             builder.Services.AddSingleton(configuration); 
           
             var host = builder.Build();
+            host.Services.GetRequiredService<IOptionsMonitor<ServerConfigModel>>();
+            
             host.Run();
         }
     }

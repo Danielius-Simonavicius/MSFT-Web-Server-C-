@@ -44,12 +44,10 @@ export class EditWebsiteComponent implements OnInit {
   }
 
   updateWebsite(updatedWebsite: Website){
-    this.websiteService.updateWesbite(updatedWebsite);
-
-    // .subscribe((x)=> {
-    //   if(x){
-    //     this.loadData;
-    //   }
-    // })
+    this.websiteService.updateWebsite(updatedWebsite).subscribe((x)=> {
+      if(x){
+        this.loadData;
+      }
+    })
   }
 }

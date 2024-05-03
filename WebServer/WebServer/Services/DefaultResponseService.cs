@@ -8,11 +8,12 @@ public class DefaultResponseService : IGetResponseService
 {
     private readonly IWebsiteHostingService _websiteHostingService;
     private readonly IMessengerService _messengerService;
-
+    //private ServerConfigModel config;
     public DefaultResponseService(IWebsiteHostingService websiteHostingService, IMessengerService messengerService)
     {
         _websiteHostingService = websiteHostingService;
         _messengerService = messengerService;
+        //this.config = config;
     }
 
     public byte[] GetResponse(HttpRequestModel requestModel, WebsiteConfigModel website, ServerConfigModel config)
@@ -21,19 +22,22 @@ public class DefaultResponseService : IGetResponseService
         string fileName = NormalizeFileName(requestModel.Path, website.DefaultPage);
         string methodType = requestModel.RequestType;
         string requestedFile = Path.Combine(config.RootFolder, website.Path, fileName);
-
+        
+        
         switch (methodType)
         {
             case "GET" when fileName.Equals("api/getWebsitesList"):
                 return HandleGetRequest(fileName, website, statusCode);
             case "POST":
                 return HandlePostRequest(fileName, website, statusCode);
+            case "PUT":
+                return HandlePutRequest(fileName, requestModel, website, statusCode);
             case "DELETE":
                 return HandleDeleteRequest(fileName, website, statusCode);
             case "OPTIONS":
                 return OptionsResponse(website);
         }
-
+        
         if (!File.Exists(requestedFile))
         {
             Console.WriteLine($"File not found: {requestedFile}");
@@ -112,6 +116,21 @@ public class DefaultResponseService : IGetResponseService
 
         return Array.Empty<byte>();
     }
+    
+    private byte[] HandlePutRequest(string fileName, HttpRequestModel requestModel, WebsiteConfigModel website, string statusCode)
+    {
+        if (fileName.StartsWith("api/update/website"))
+        {
+            var responseHeader = BuildHeader(statusCode, "application/json; charset=UTF-8", website);
+            var WebsiteId = fileName.Substring(fileName.LastIndexOf('/') + 1);
+            WebsiteConfigModel updatedWebsite = (WebsiteConfigModel) requestModel.BodyContent!;
+            _websiteHostingService.EditWebsiteInConfig(WebsiteId, updatedWebsite);
+            //sending message to listeners which website was edited
+            return Encoding.ASCII.GetBytes(responseHeader).ToArray();
+        }
+
+        return Array.Empty<byte>();
+    }
 
     private byte[] OptionsResponse(WebsiteConfigModel website)
     {
@@ -119,8 +138,8 @@ public class DefaultResponseService : IGetResponseService
         string responseHeader =
             $"HTTP/1.1 {statusCode}\r\n" +
             "Server: Microsoft_web_server\r\n" +
-            "Allow: GET, POST, OPTIONS, DELETE\r\n" +
-            "Access-Control-Allow-Methods: GET, POST, OPTIONS, DELETE\r\n" +
+            "Allow: GET, POST, OPTIONS, PUT, DELETE\r\n" +
+            "Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE\r\n" +
             "Access-Control-Allow-Headers: Content-Type\r\n" +
             $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n" +
             "\r\n";

@@ -66,7 +66,7 @@ public class WebsiteHostingService : IWebsiteHostingService
 
         //Splitting upload data into parts by the boundry (0 is header, 1 in file content, 2 and onwards is part of form data object)
         var parts = SplitByteArray(data, delimiter);
-        //var stringParts = parts.ConvertAll(bytes => Encoding.ASCII.GetString(bytes)).ToArray();
+        var stringParts = parts.ConvertAll(bytes => Encoding.ASCII.GetString(bytes)).ToArray();
 
         //This removes the filecontents header
         result.FileContent = ExtractFileContent(parts[1]);
@@ -101,7 +101,41 @@ public class WebsiteHostingService : IWebsiteHostingService
         return serverConfig!;
     }
 
-    public void RemoveWebsiteFromConfig(string websiteToRemoveId, out WebsiteConfigModel websiteRemoved)
+    public void EditWebsiteInConfig(string websiteId, WebsiteConfigModel editedWebsite)
+    {
+        var serverConfig = GetSettings();
+        var index = -1;
+        for (var i = 0; i < serverConfig!.Websites.Count; i++)
+        {
+            if (serverConfig.Websites[i].WebsiteId == websiteId)
+            {
+                index = i;
+                break;
+            }
+        }
+        
+        if (index != -1)
+        {
+            //removing website from config
+            serverConfig.Websites.RemoveAt(index);
+            
+            //adding edited version to config
+            serverConfig.Websites?.Add(editedWebsite);
+
+            //serializing updated config
+            var updatedConfig = JsonConvert.SerializeObject(serverConfig, Formatting.Indented);
+
+            // Write the updated JSON back to the file
+            File.WriteAllText(jsonFilePath, updatedConfig);
+        }
+        else
+        {
+            _logger.LogCritical("Website ID not found");
+        }
+
+    }
+
+    public void RemoveWebsiteFromConfig(string websiteId, out WebsiteConfigModel websiteRemoved)
     {
         // Read JSON file contents into a string
         var serverConfig = GetSettings();
@@ -109,7 +143,7 @@ public class WebsiteHostingService : IWebsiteHostingService
         var index = -1;
         for (var i = 0; i < serverConfig!.Websites.Count; i++)
         {
-            if (serverConfig.Websites[i].WebsiteId == websiteToRemoveId)
+            if (serverConfig.Websites[i].WebsiteId == websiteId)
             {
                 index = i;
                 break;

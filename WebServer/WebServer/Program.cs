@@ -16,14 +16,15 @@ namespace WebServer
             builder.Services.AddTransient<IWebsiteHostingService, WebsiteHostingService>();
             
             builder.Services.AddTransient<IGetResponseService, DefaultResponseService>();
+            builder.Services.AddTransient<IConfigurationService, DefaultConfigurationService>();
             builder.Services.AddHostedService<WorkerService>();
 
             builder.Services.AddSingleton<IMessengerService, MessengerService>();
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("WebsiteConfig.json", optional: false,
-                    reloadOnChange: true) 
-                .Build();
-            builder.Services.AddSingleton(configuration); 
+            // var configuration = new ConfigurationBuilder()
+            //     .AddJsonFile("WebsiteConfig.json", optional: false,
+            //         reloadOnChange: true) 
+            //     .Build();
+            // builder.Services.AddSingleton(configuration); 
           
             var host = builder.Build();
             host.Services.GetRequiredService<IOptionsMonitor<ServerConfigModel>>();

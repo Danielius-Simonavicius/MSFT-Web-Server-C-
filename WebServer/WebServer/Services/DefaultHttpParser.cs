@@ -67,7 +67,7 @@ public class DefaultHttpParser : IHttpRequestParser
         }
 
 
-        if (sections.Length > 1 && model.Path.StartsWith("/api/update/website"))
+        if (sections.Length > 1 && model.Path.StartsWith("/api/admin/site"))
         {
             model.BodyContent = JsonSerializer.Deserialize<WebsiteConfigModel>(sections[1]);
         }

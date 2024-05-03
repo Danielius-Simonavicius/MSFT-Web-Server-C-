@@ -8,7 +8,7 @@ import { map } from 'rxjs/operators';
   providedIn: 'root',
 })
 export class WebsiteService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   uploadWebsite(model: FormData): Observable<any> {
     return this.http.post<any>(
@@ -19,11 +19,11 @@ export class WebsiteService {
 
   getAllWebsites(): Observable<Website[]> {
     return this.http.get<Website[]>(
-      `${environment.apiUrl}/api/getWebsitesList`
+      `${environment.apiUrl}/api/admin/sites`
     );
   }
 
-  getWebsite(id: string){
+  getWebsite(id: string) {
     return this.getAllWebsites().pipe(
       map(websites => websites.find(website => website.WebsiteId === id))
     );
@@ -31,16 +31,16 @@ export class WebsiteService {
 
   deleteWebsite(WebsiteId: string) {
     return this.http.delete(
-      `${environment.apiUrl}/api/delete/website/${WebsiteId}`
+      `${environment.apiUrl}/api/admin/site/${WebsiteId}`
     );
   }
 
   updateWebsite(website: Website) {
     console.log("posted");
     return this.http.put(
-      `${environment.apiUrl}/api/update/website/${website.WebsiteId}`,
+      `${environment.apiUrl}/api/admin/site/${website.WebsiteId}`,
       website
     );
   }
-  
+
 }

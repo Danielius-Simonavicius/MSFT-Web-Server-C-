@@ -36,7 +36,7 @@
     {
       "WebsiteId": "abe20501-ee45-44ed-aa7b-ed5b4c94d795",
       "WebsiteName": "MehirsLoginPage",
-      "AllowedHosts": "test",
+      "AllowedHosts": "test-blyat",
       "DefaultPage": "index.html",
       "Path": "MehirsLoginPage",
       "WebsitePort": 9092

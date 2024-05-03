@@ -12,8 +12,8 @@ namespace WebServer;
 public class WorkerService : BackgroundService, IMessengerListener
 {
  
-    private Dictionary<string, CancellationTokenSource> _websiteThreads = new();
-    private readonly ServerConfigModel _config;
+    private readonly Dictionary<string, CancellationTokenSource> _websiteThreads = new();
+    private ServerConfigModel _config;
     private readonly ILogger<WorkerService> _logger;
 
     private readonly ConcurrentQueue<HttpRequestModel> _requestsQueue = new();
@@ -23,14 +23,19 @@ public class WorkerService : BackgroundService, IMessengerListener
     private readonly IGetResponseService _responseService;
 
     private readonly IMessengerService _messengerService;
-    public readonly IWebsiteHostingService WebsiteHostingService;
+    private readonly IWebsiteHostingService WebsiteHostingService;
+    private readonly IConfigurationService _configurationService;
 
     public WorkerService(ILogger<WorkerService> logger,
         IHttpRequestParser parser,
         IWebsiteHostingService websiteHostingService,
-        IMessengerService messengerService, IGetResponseService responseService)
+        IMessengerService messengerService, 
+        IGetResponseService responseService,
+        IConfigurationService configurationService
+        )
     {
-        _config = websiteHostingService.GetSettings();
+        _configurationService = configurationService;
+        _config = _configurationService.GetSettings();
         _logger = logger;
         _parser = parser;
         WebsiteHostingService = websiteHostingService;
@@ -41,6 +46,7 @@ public class WorkerService : BackgroundService, IMessengerListener
     private void StartWebsites()
     {
         _messengerService.AddNewWebSiteAddedListener(this);
+        _messengerService.AddConfigChangedListener(this);
         var websites = _config.Websites;
 
         foreach (var website in websites)
@@ -139,7 +145,7 @@ public class WorkerService : BackgroundService, IMessengerListener
             //If request is to upload a new website
             if (request.ContentType.StartsWith("multipart/form-data;") && request.RequestedPort is 9090 or 4200)
             {
-                WebsiteHostingService.LoadWebsite(totalBytes.ToArray(), request, _config);
+                WebsiteHostingService.LoadWebsite(totalBytes.ToArray(), request);
             }
 
             request.Client = handler;
@@ -155,6 +161,8 @@ public class WorkerService : BackgroundService, IMessengerListener
 
     public void NewWebSiteAdded(WebsiteConfigModel website)
     {
+        _config = this._configurationService.GetSettings();
+        _logger.LogInformation($"Starting Website {website.WebsiteId} thread");
         var threadCancellationToken = new CancellationTokenSource();
         var thread = new Thread(() => ConnectionThreadMethod(website, threadCancellationToken));
         thread.Start();
@@ -165,8 +173,10 @@ public class WorkerService : BackgroundService, IMessengerListener
 
     public void WebSiteRemoved(WebsiteConfigModel website)
     {
+        _config = this._configurationService.GetSettings();
         if (_websiteThreads.TryGetValue(website.WebsiteId, out var cancellationToken))
         {
+            _logger.LogInformation($"Stopping Website {website.WebsiteId} thread");
             // Signal the thread to stop
             cancellationToken.Cancel();
             _websiteThreads.TryGetValue(website.WebsiteId, out var threadInfo);
@@ -178,6 +188,12 @@ public class WorkerService : BackgroundService, IMessengerListener
 
             // Remove the thread from the dictionary
             _websiteThreads.Remove(website.WebsiteId);
+           
         }
+    }
+
+    public void ConfigChanged()
+    {
+        _config = this._configurationService.GetSettings();
     }
 }

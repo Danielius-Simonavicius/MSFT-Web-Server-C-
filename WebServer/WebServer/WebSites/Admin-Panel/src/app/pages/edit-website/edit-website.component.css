@@ -1,68 +1,90 @@
-.website-container {
-    font-family: 'Arial', sans-serif;
-    background-color: #f9f9f9;
-    border: 1px solid #e1e1e1;
-    border-radius: 8px;
-    padding: 20px;
-    margin: 20px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+.full-page-background {
+  background: linear-gradient(#141e30, #243b55); /* Blue gradient background */
+  color: #fff; /* White text for better visibility */
+  height: 100vh; /* Full viewport height */
+  width: 100vw; /* Full viewport width */
+  padding: 20px;
+  box-sizing: border-box; /* Include padding in width calculation */
+  display: flex;
+  justify-content: center; /* Center horizontally */
+  align-items: flex-start; /* Start aligning vertically from the top */
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
-.website-header {
-    border-bottom: 2px solid #ddd;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
+.website-container {
+  width: 80%; /* Slightly reduce width for desktop view */
+  max-width: 800px; /* Maximum width */
+  margin: auto; /* Center in the available vertical space */
+  padding: 20px;
+  border: 1px solid #666;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.website-header,
+.website-details {
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #ddd;
+}
+
+.website-header h2,
+.website-details p,
+.website-header p {
+  color: #ccc; /* Consistent text color */
+  margin-bottom: 10px; /* Uniform margin */
 }
 
 .website-header h2 {
-    color: #333;
-    font-size: 24px;
+  font-size: 32px; /* This was previously smaller, adjust the size as needed */
 }
 
-.website-header p {
-    margin: 10px 0;
-}
-
-.website-header label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-
-.website-header input[type="text"] {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-
+.website-header p,
 .website-details p {
-    margin: 10px 0;
+  font-size: 24px; /* Adjust this value as needed for better readability */
 }
 
-.website-details label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 5px;
+label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
 }
 
-.website-details input[type="text"] {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+input[type="text"] {
+  width: 100%; /* Full width */
+  padding: 8px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid #fff; /* Simplify border to underline */
+  color: #fff;
 }
 
 button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    background-color: #007BFF;
-    color: white;
-    cursor: pointer;
-    margin-right: 10px;
+  width: auto; /* Auto width based on content */
+  padding: 12px 20px;
+  margin-top: 20px; /* Space from the last input */
+  background-color: #162e49;
+  transition: all 0.3s;
+  color: #fff;
 }
 
 button:hover {
-    background-color: #0056b3;
+  background-color: #0628af;
+  transform: scale(1.1);
+}
+
+input[type="text"].no-border {
+  border-bottom: none; /* Explicitly remove the border */
+}
+
+/* Add margin to the right of the first button (Update) */
+.website-details button:first-of-type {
+  margin-left: 250px; /* Adjust this value to get the desired spacing */
+}
+
+/* Alternatively, if you prefer to add space to the left of the Delete button */
+.website-details button:last-of-type {
+  margin-left: 80px;
 }

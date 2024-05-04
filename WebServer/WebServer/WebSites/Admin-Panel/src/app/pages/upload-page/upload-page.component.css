@@ -1,24 +1,58 @@
+.full-page-background {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(#141e30, #243b55);
+  color: #fff;
+  min-height: 100vh;
+  min-width: 100vw;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-attachment: fixed; /* This keeps the background fixed during scrolling */
+  background-repeat: no-repeat; /* Prevents the background from repeating */
+  background-size: cover; 
+}
+
+.main-container {
+  display: flex;
+  flex-direction: row;
+  box-sizing: border-box;
+  padding: 20px 0;
+  background: linear-gradient(#141e30, #243b55);
+  color: #fff;
+  font-family: sans-serif;
+  min-height: 100vh; 
+  width: 100vw;
+}
+
+
 .left-section {
-  width: 40%; /* Adjust width as needed */
-  float: left; /* Float left to position on the left side */
-  padding: 20px; /* Add padding for spacing */
-  box-sizing: border-box; /* Include padding in width calculation */
+  width: 40%;
+  padding: 20px;
+  box-sizing: border-box;
+  border-right: 2px solid #666;
 }
 
 .content-block {
   font-size: 24px;
   font-weight: bold;
+  margin-top: 0px;
   margin-bottom: 20px;
 }
 
 .uploadForm {
-  width: 100%; /* Full width of parent container */
+  width: 100%;
+  display: block;
+  padding-top: 20px;
 }
 
 .uploadForm input,
 .uploadForm button {
-  width: 100%; /* Full width for input fields and button */
-  margin-bottom: 10px; /* Add spacing between elements */
+  width: 100%;
+  margin-bottom: 10px;
 }
 
 .error-message {
@@ -27,43 +61,19 @@
   margin-top: 5px;
 }
 
-
 .right-section {
-  width: 60%; /* Adjust width as needed */
-  display:grid;
-  width: 200px;
-  float: left; /* Float left to position on the right side */
-  padding: 20px; /* Add padding for spacing */
-  box-sizing: border-box; /* Include padding in width calculation */
-}
-
-.website-card {
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 60%;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
   padding: 20px;
-  margin-bottom: 20px;
-  width: 500px;
+  box-sizing: border-box;
 }
 
-.website-header h2 {
-  font-size: 20px;
-  margin-bottom: 10px;
-}
-
-.website-header p {
-  font-size: 16px;
-  color: #666;
-}
-
-.website-details p {
-  font-size: 14px;
-  margin-bottom: 8px;
-}
 
 .button {
   padding: 8px 16px;
-  background-color: red;
+  background-color: #03e9f4;
   color: white;
   border: none;
   border-radius: 4px;
@@ -72,5 +82,114 @@
 }
 
 .button:hover {
-  background-color: darkred;
+  background-color: #3b3b3f;
+}
+
+.uploadForm input[type="text"],
+.uploadForm input[type="file"],
+.uploadForm button {
+  width: 100%;
+  padding: 10px 0;
+  font-size: 16px;
+  color: #fff;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid #fff;
+  outline: none;
+  transition: border-color 0.5s;
+}
+
+.uploadForm input[type="text"]:focus,
+.uploadForm input[type="file"]:focus,
+.uploadForm button:focus {
+  border-bottom: 2px solid #03e9f4;
+}
+
+.uploadForm input[type="text"]:focus + label,
+.uploadForm input[type="file"]:focus + label {
+  top: -20px;
+  font-size: 12px;
+  color: #03e9f4;
+}
+
+.uploadForm input:valid + label {
+  top: -20px;
+  font-size: 12px;
+  color: #03e9f4;
+}
+
+.uploadForm label {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  color: #fff;
+  pointer-events: none;
+  transition: 0.5s;
+  font-size: 16px;
+}
+
+.uploadForm .input-container {
+  position: relative;
+  margin-bottom: 30px;
+}
+
+.uploadForm .input-container input {
+  padding: 10px 0 10px 10px;
+}
+
+.button:hover {
+  background-color: #3b3b3f;
+}
+
+.website-card {
+  border: 1px solid #666;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.website-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(3, 169, 244, 0.7);
+}
+
+
+.website-header h2 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.website-card button:last-of-type {
+  padding: 12px 20px;
+  font-size: 18px;
+  background-color: #021e34;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.website-card button:last-of-type:hover {
+  background-color: #001a81;
+  transform: scale(1.1);
+}
+
+.uploadForm button[type="submit"] {
+  padding: 10px 16px;
+  font-size: 16px;
+
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.uploadForm button[type="submit"]:hover {
+  background-color: #021e34;
+  transform: scale(1.07);
+}
+
+.website-card button {
+  margin-top: 20px;
 }

@@ -32,6 +32,14 @@
       "DefaultPage": "index.html",
       "Path": "DorianWebsite",
       "WebsitePort": 9093
+    },
+    {
+      "WebsiteId": "fec32f53-ac28-444f-92d8-454527a1b09c",
+      "WebsiteName": "dfsgbs",
+      "AllowedHosts": "*",
+      "DefaultPage": "index.html",
+      "Path": "fec32f53-ac28-444f-92d8-454527a1b09c/svdss",
+      "WebsitePort": 8000
     }
   ]
 }

@@ -4,7 +4,7 @@ namespace WebServer.Services;
 
 public class MessengerService: IMessengerService
 {
-
+    private List<IMessengerListener> configChangedListeners = new();
     private List<IMessengerListener> websiteAddedListeners = new();
     
     public void AddNewWebSiteAddedListener(IMessengerListener listener)
@@ -19,9 +19,9 @@ public class MessengerService: IMessengerService
 
     public void SendNewWebsiteEvent(WebsiteConfigModel website)
     {
-        foreach (var websiteAddedListener in websiteAddedListeners)
+        foreach (var listener in websiteAddedListeners)
         {
-            websiteAddedListener.NewWebSiteAdded(website);
+            listener.NewWebSiteAdded(website);
         }
     }
 
@@ -30,6 +30,19 @@ public class MessengerService: IMessengerService
         foreach (var websiteAddedListener in websiteAddedListeners)
         {
             websiteAddedListener.WebSiteRemoved(website);
+        }
+    }
+
+    public void AddConfigChangedListener(IMessengerListener listener)
+    {
+        configChangedListeners.Add(listener);
+    }
+
+    public void SendConfigChangedEvent()
+    {
+        foreach (var listener in configChangedListeners)
+        {
+            listener.ConfigChanged();
         }
     }
 }

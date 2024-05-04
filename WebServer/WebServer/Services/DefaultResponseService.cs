@@ -8,35 +8,55 @@ public class DefaultResponseService : IGetResponseService
 {
     private readonly IWebsiteHostingService _websiteHostingService;
     private readonly IMessengerService _messengerService;
-
-    public DefaultResponseService(IWebsiteHostingService websiteHostingService, IMessengerService messengerService)
+    private ServerConfigModel? _websitesConfigurations;
+    private readonly IConfigurationService _configurationService;
+    private readonly ILogger _logger;
+    public DefaultResponseService(IWebsiteHostingService websiteHostingService, 
+        IMessengerService messengerService,
+        IConfigurationService configurationService,
+        ILogger<DefaultResponseService> logger)
     {
         _websiteHostingService = websiteHostingService;
         _messengerService = messengerService;
+        _configurationService = configurationService;
+        _logger = logger;
     }
 
+    private bool LoadConfig()
+    {
+        this._websitesConfigurations = _configurationService.GetSettings();
+        return _websitesConfigurations != null;
+    }
+    
+ 
+    
+    
+    
     public byte[] GetResponse(HttpRequestModel requestModel, WebsiteConfigModel website, ServerConfigModel config)
     {
         const string statusCode = "200 OK";
         string fileName = NormalizeFileName(requestModel.Path, website.DefaultPage);
         string methodType = requestModel.RequestType;
         string requestedFile = Path.Combine(config.RootFolder, website.Path, fileName);
-
+        
+        
         switch (methodType)
         {
-            case "GET" when fileName.Equals("api/getWebsitesList"):
+            case "GET" when fileName.Equals("api/admin/sites"):
                 return HandleGetRequest(fileName, website, statusCode);
             case "POST":
                 return HandlePostRequest(fileName, website, statusCode);
+            case "PUT":
+                return HandlePutRequest(fileName, requestModel, website, statusCode);
             case "DELETE":
                 return HandleDeleteRequest(fileName, website, statusCode);
             case "OPTIONS":
                 return OptionsResponse(website);
         }
-
+        
         if (!File.Exists(requestedFile))
         {
-            Console.WriteLine($"File not found: {requestedFile}");
+            _logger.LogInformation("File not found: {requestedFile}", requestedFile);
             return NotFound404(website);
         }
 
@@ -53,15 +73,24 @@ public class DefaultResponseService : IGetResponseService
 
     private byte[] HandleGetRequest(string fileName, WebsiteConfigModel website, string statusCode)
     {
-        if (fileName.Equals("api/getWebsitesList"))
+        if (fileName.Equals("api/admin/sites"))
         {
+            this.LoadConfig();
             var responseHeader = BuildHeader(statusCode, "application/json; charset=UTF-8", website);
-            var websites = _websiteHostingService.GetSettings().Websites;
+            if (_websitesConfigurations == null)
+            {
+                if (!this.LoadConfig())
+                {
+                    return [];
+                }
+            }
+            var websites = _websitesConfigurations!.Websites;
+
             var websiteBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(websites));
             return Encoding.ASCII.GetBytes(responseHeader).Concat(websiteBytes).ToArray();
         }
 
-        return Array.Empty<byte>();
+        return [];
     }
 
     private byte[] HandlePostRequest(string fileName, WebsiteConfigModel website, string statusCode)
@@ -99,18 +128,35 @@ public class DefaultResponseService : IGetResponseService
 
     private byte[] HandleDeleteRequest(string fileName, WebsiteConfigModel website, string statusCode)
     {
-        if (fileName.StartsWith("api/delete/website"))
+        if (fileName.StartsWith("api/admin/site"))
         {
             var responseHeader = BuildHeader(statusCode, "application/json; charset=UTF-8", website);
             var WebsiteId = fileName.Substring(fileName.LastIndexOf('/') + 1);
             //removing website from config
-            _websiteHostingService.RemoveWebsiteFromConfig(WebsiteId, out var websiteRemoved);
+            _configurationService.RemoveWebsiteFromConfig(WebsiteId, out var websiteRemoved);
             //sending message to listeners which website was removed
             _messengerService.WebSiteRemovedEvent(websiteRemoved);
+            this.LoadConfig();
             return Encoding.ASCII.GetBytes(responseHeader).ToArray();
         }
 
-        return Array.Empty<byte>();
+        return [];
+    }
+    
+    private byte[] HandlePutRequest(string fileName, HttpRequestModel requestModel, WebsiteConfigModel website, string statusCode)
+    {
+        if (fileName.StartsWith("api/admin/site"))
+        {
+            var responseHeader = BuildHeader(statusCode, "application/json; charset=UTF-8", website);
+            var WebsiteId = fileName.Substring(fileName.LastIndexOf('/') + 1);
+            WebsiteConfigModel updatedWebsite = (WebsiteConfigModel) requestModel.BodyContent!;
+            _configurationService.EditWebsiteInConfig(WebsiteId, updatedWebsite);
+            this.LoadConfig();
+            //sending message to listeners which website was edited
+            return Encoding.ASCII.GetBytes(responseHeader).ToArray();
+        }
+
+        return [];
     }
 
     private byte[] OptionsResponse(WebsiteConfigModel website)
@@ -119,8 +165,8 @@ public class DefaultResponseService : IGetResponseService
         string responseHeader =
             $"HTTP/1.1 {statusCode}\r\n" +
             "Server: Microsoft_web_server\r\n" +
-            "Allow: GET, POST, OPTIONS, DELETE\r\n" +
-            "Access-Control-Allow-Methods: GET, POST, OPTIONS, DELETE\r\n" +
+            "Allow: GET, POST, OPTIONS, PUT, DELETE\r\n" +
+            "Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE\r\n" +
             "Access-Control-Allow-Headers: Content-Type\r\n" +
             $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n" +
             "\r\n";

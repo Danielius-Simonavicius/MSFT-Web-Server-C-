@@ -1,3 +1,4 @@
+using System.Text.Json;
 using WebServer.Models;
 
 namespace WebServer.Services;
@@ -25,6 +26,7 @@ public class DefaultHttpParser : IHttpRequestParser
         var model = new HttpRequestModel();
         //Splitting all logged data into array lines
         var lines = sections[0].Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+
 
         //Extracting logged data and placing them into HTTPRequestModel
         model.Host = ExtractValue(lines, "Host");
@@ -62,6 +64,12 @@ public class DefaultHttpParser : IHttpRequestParser
                     break;
                 }
             }
+        }
+
+
+        if (sections.Length > 1 && model.Path.StartsWith("/api/admin/site"))
+        {
+            model.BodyContent = JsonSerializer.Deserialize<WebsiteConfigModel>(sections[1]);
         }
 
         return model;

@@ -10,6 +10,14 @@
       "WebsitePort": 9090
     },
     {
+      "WebsiteId": "ef7e9340-034a-4382-ab89-19c78ab2cf25",
+      "WebsiteName": "frontend`",
+      "AllowedHosts": "*",
+      "DefaultPage": "index.html",
+      "Path": "ef7e9340-034a-4382-ab89-19c78ab2cf25/frontend",
+      "WebsitePort": 8003
+    },
+    {
       "WebsiteId": "70bf3eeb-6360-4e41-b399-543f39136afb",
       "WebsiteName": "XtraceLoginPage",
       "AllowedHosts": "*",
@@ -20,25 +28,33 @@
     {
       "WebsiteId": "abe20501-ee45-44ed-aa7b-ed5b4c94d795",
       "WebsiteName": "MehirsLoginPage",
-      "AllowedHosts": "*",
+      "AllowedHosts": "test-blyat",
       "DefaultPage": "index.html",
       "Path": "MehirsLoginPage",
       "WebsitePort": 9092
     },
     {
       "WebsiteId": "d114c0a0-7d95-4fd1-97df-9427ced9e62c",
-      "WebsiteName": "DoriansWebsite",
+      "WebsiteName": "DorianWebsite",
       "AllowedHosts": "*",
       "DefaultPage": "index.html",
       "Path": "DorianWebsite",
       "WebsitePort": 9093
     },
     {
-      "WebsiteId": "fec32f53-ac28-444f-92d8-454527a1b09c",
-      "WebsiteName": "dfsgbs",
+      "WebsiteId": "0daff854-f4f1-47dc-baa7-b0a640d16afc",
+      "WebsiteName": "gymWebsite",
       "AllowedHosts": "*",
       "DefaultPage": "index.html",
-      "Path": "fec32f53-ac28-444f-92d8-454527a1b09c/svdss",
+      "Path": "0daff854-f4f1-47dc-baa7-b0a640d16afc/gymWebsite",
+      "WebsitePort": 8001
+    },
+    {
+      "WebsiteId": "ca1bf2f6-e1a4-4a0b-816c-72b7c0ad62d1",
+      "WebsiteName": "Phone Assingment",
+      "AllowedHosts": "*",
+      "DefaultPage": "index.html",
+      "Path": "ca1bf2f6-e1a4-4a0b-816c-72b7c0ad62d1/phoneWebsite",
       "WebsitePort": 8000
     }
   ]

@@ -12,41 +12,40 @@ namespace WebServer.Services;
 public class WebsiteHostingService : IWebsiteHostingService
 {
     private readonly ILogger<WebsiteHostingService> _logger;
-    private readonly string jsonFilePath = "./WebsiteConfig.json";
+    private readonly IConfigurationService _configurationService;
 
     private readonly IMessengerService _messengerService;
 
     public WebsiteHostingService(ILogger<WebsiteHostingService> logger,
-        IMessengerService messengerService)
+        IMessengerService messengerService,
+        IConfigurationService configurationService)
     {
         _logger = logger;
         _messengerService = messengerService;
+        _configurationService = configurationService;
     }
 
-    public void LoadWebsite(byte[] data, HttpRequestModel request, ServerConfigModel config)
+    public void LoadWebsite(byte[] data, HttpRequestModel request)
     {
         // Split the byte array by ------Webkitboundary
         var parsedResult = ParseUploadData(data, request.ContentType);
-
+        
         //If extracting file wasn't successful, dont add to WebsiteConfig.json
         if (!ExtractAndUnzipWebsiteFile(parsedResult.FileContent,
-                config, parsedResult.UniqueFolderName)) return;
+                parsedResult.UniqueFolderName)) return;
         try
         {
-            var serverConfig = GetSettings();
+            var serverConfig = this._configurationService.GetSettings();
             // Access the "Websites" array within the ServerConfig
             var websites = serverConfig.Websites;
-
             // Add the new website configuration to the array
-            websites?.Add(parsedResult.NewWebsite);
+            if (parsedResult.NewWebsite == null) return;
+            websites.Add(parsedResult.NewWebsite);
+            if (_configurationService.SaveConfig(serverConfig))
+            {
+                _messengerService.SendNewWebsiteEvent(parsedResult.NewWebsite);
+            }
 
-            // Serialize the updated ServerConfig object back to JSON
-            var updatedConfig = JsonConvert.SerializeObject(serverConfig, Formatting.Indented);
-
-            // Write the updated JSON back to the file
-            File.WriteAllText(jsonFilePath, updatedConfig);
-
-            _messengerService.SendNewWebsiteEvent(parsedResult.NewWebsite);
         }
         catch (Exception e)
         {
@@ -58,8 +57,7 @@ public class WebsiteHostingService : IWebsiteHostingService
     public ParseResultModel? ParseUploadData(byte[] data, string contentType)
     {
         ParseResultModel result = new ParseResultModel();
-        var match = Match(contentType,
-            @"boundary=(?<boundary>.+)");
+        var match = Match(contentType, @"boundary=(?<boundary>.+)");
         var boundary = match.Success ? match.Groups["boundary"].Value.Trim() : "";
 
         var delimiter = Encoding.ASCII.GetBytes("--" + boundary);
@@ -93,47 +91,7 @@ public class WebsiteHostingService : IWebsiteHostingService
         }
     }
 
-    public ServerConfigModel GetSettings()
-    {
-        // Read JSON file contents into a string
-        var jsonContent = File.ReadAllText(jsonFilePath);
-        var serverConfig = JsonConvert.DeserializeObject<ServerConfigModel>(jsonContent);
-        return serverConfig!;
-    }
-
-    public void RemoveWebsiteFromConfig(string websiteToRemoveId, out WebsiteConfigModel websiteRemoved)
-    {
-        // Read JSON file contents into a string
-        var serverConfig = GetSettings();
-
-        var index = -1;
-        for (var i = 0; i < serverConfig!.Websites.Count; i++)
-        {
-            if (serverConfig.Websites[i].WebsiteId == websiteToRemoveId)
-            {
-                index = i;
-                break;
-            }
-        }
-
-        if (index != -1)
-        {
-            websiteRemoved = serverConfig.Websites[index];
-            serverConfig.Websites.RemoveAt(index);
-
-            var updatedConfig = JsonConvert.SerializeObject(serverConfig, Formatting.Indented);
-
-            // Write the updated JSON back to the file
-            File.WriteAllText(jsonFilePath, updatedConfig);
-        }
-        else
-        {
-            _logger.LogCritical("Website ID not found");
-            websiteRemoved = null;
-        }
-    }
-
-    private bool ExtractAndUnzipWebsiteFile(byte[] zipData, ServerConfigModel config, string uniqueFolderName)
+    private bool ExtractAndUnzipWebsiteFile(byte[] zipData, string uniqueFolderName)
     {
         try
         {
@@ -148,6 +106,7 @@ public class WebsiteHostingService : IWebsiteHostingService
                 if (string.IsNullOrEmpty(Path.GetFileName(entry.FullName)))
                     continue;
 
+                var config = _configurationService.GetSettings();
                 // Combine output path with entry's name
                 var filePath = Path.Combine(config.RootFolder, uniqueFolderName, entry.FullName);
 
@@ -160,6 +119,7 @@ public class WebsiteHostingService : IWebsiteHostingService
         }
         catch (Exception ex)
         {
+            _logger.LogInformation(ex.ToString());
             return false; //failed to extract file
         }
 
@@ -168,17 +128,22 @@ public class WebsiteHostingService : IWebsiteHostingService
 
     private byte[] ExtractFileContent(byte[] byteArray)
     {
-        const string pkSignature = "PK";
-        var pkBytes = Encoding.ASCII.GetBytes(pkSignature);
-        var index = IndexOf(byteArray, pkBytes, 0);
-        if (index != -1)
+        try
         {
-            // Return the file content byte array starting from "PK"
-            return SubArray(byteArray, index, byteArray.Length - index);
+            const string pkSignature = "PK";
+            var pkBytes = Encoding.ASCII.GetBytes(pkSignature);
+            var index = IndexOf(byteArray, pkBytes, 0);
+            if (index != -1)
+            {
+                // Return the file content byte array starting from "PK"
+                return SubArray(byteArray, index, byteArray.Length - index);
+            }
         }
-
-        // Handle case when "PK" is not found
-        return null!; // or throw an exception
+        catch (Exception e)
+        {
+            _logger.LogInformation("Failed at extracting file content");
+        }
+        return null; // or throw an exception
     }
 
     private List<byte[]> SplitByteArray(byte[] byteArray, byte[] delimiter)

@@ -4,9 +4,9 @@ namespace WebServer.Services;
 
 public interface IWebsiteHostingService
 {
-    void LoadWebsite(byte[] data, HttpRequestModel request, ServerConfigModel config);
+    void LoadWebsite(byte[] data, HttpRequestModel request);
 
     ParseResultModel? ParseUploadData(byte[] data, string contentType);
-    ServerConfigModel GetSettings();
-    public void RemoveWebsiteFromConfig(string websiteToRemoveId,out WebsiteConfigModel websiteRemoved);
+    
+
 }

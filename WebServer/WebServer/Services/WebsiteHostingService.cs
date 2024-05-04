@@ -29,7 +29,7 @@ public class WebsiteHostingService : IWebsiteHostingService
     {
         // Split the byte array by ------Webkitboundary
         var parsedResult = ParseUploadData(data, request.ContentType);
-
+        
         //If extracting file wasn't successful, dont add to WebsiteConfig.json
         if (!ExtractAndUnzipWebsiteFile(parsedResult.FileContent,
                 parsedResult.UniqueFolderName)) return;
@@ -57,15 +57,14 @@ public class WebsiteHostingService : IWebsiteHostingService
     public ParseResultModel? ParseUploadData(byte[] data, string contentType)
     {
         ParseResultModel result = new ParseResultModel();
-        var match = Match(contentType,
-            @"boundary=(?<boundary>.+)");
+        var match = Match(contentType, @"boundary=(?<boundary>.+)");
         var boundary = match.Success ? match.Groups["boundary"].Value.Trim() : "";
 
         var delimiter = Encoding.ASCII.GetBytes("--" + boundary);
 
         //Splitting upload data into parts by the boundry (0 is header, 1 in file content, 2 and onwards is part of form data object)
         var parts = SplitByteArray(data, delimiter);
-        var stringParts = parts.ConvertAll(bytes => Encoding.ASCII.GetString(bytes)).ToArray();
+        //var stringParts = parts.ConvertAll(bytes => Encoding.ASCII.GetString(bytes)).ToArray();
 
         //This removes the filecontents header
         result.FileContent = ExtractFileContent(parts[1]);
@@ -120,6 +119,7 @@ public class WebsiteHostingService : IWebsiteHostingService
         }
         catch (Exception ex)
         {
+            _logger.LogInformation(ex.ToString());
             return false; //failed to extract file
         }
 
@@ -128,17 +128,22 @@ public class WebsiteHostingService : IWebsiteHostingService
 
     private byte[] ExtractFileContent(byte[] byteArray)
     {
-        const string pkSignature = "PK";
-        var pkBytes = Encoding.ASCII.GetBytes(pkSignature);
-        var index = IndexOf(byteArray, pkBytes, 0);
-        if (index != -1)
+        try
         {
-            // Return the file content byte array starting from "PK"
-            return SubArray(byteArray, index, byteArray.Length - index);
+            const string pkSignature = "PK";
+            var pkBytes = Encoding.ASCII.GetBytes(pkSignature);
+            var index = IndexOf(byteArray, pkBytes, 0);
+            if (index != -1)
+            {
+                // Return the file content byte array starting from "PK"
+                return SubArray(byteArray, index, byteArray.Length - index);
+            }
         }
-
-        // Handle case when "PK" is not found
-        return null!; // or throw an exception
+        catch (Exception e)
+        {
+            _logger.LogInformation("Failed at extracting file content");
+        }
+        return null; // or throw an exception
     }
 
     private List<byte[]> SplitByteArray(byte[] byteArray, byte[] delimiter)

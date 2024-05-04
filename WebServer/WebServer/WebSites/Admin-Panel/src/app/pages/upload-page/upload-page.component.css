@@ -1,76 +1,89 @@
-.left-section {
-  width: 40%; /* Adjust width as needed */
-  float: left; /* Float left to position on the left side */
-  padding: 20px; /* Add padding for spacing */
-  box-sizing: border-box; /* Include padding in width calculation */
+/* General Styles */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #2c3e50;
+  color: #ecf0f1;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 20px;
+  min-height: 100vh;
 }
 
-.content-block {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 20px;
+.left-section, .right-section {
+  width: 50%;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+h2 {
+  margin-bottom: 0.5em;
+}
+
+/* Styles for left section */
+.left-section {
+  background-color: #34495e;
+  box-shadow: -1px 0 10px rgba(0,0,0,0.2);
 }
 
 .uploadForm {
-  width: 100%; /* Full width of parent container */
+  display: flex;
+  flex-direction: column;
 }
 
-.uploadForm input,
-.uploadForm button {
-  width: 100%; /* Full width for input fields and button */
-  margin-bottom: 10px; /* Add spacing between elements */
+input[type="text"], input[type="file"] {
+  padding: 10px;
+  margin-bottom: 20px;
+  background: #95a5a6;
+  border: none;
+  border-radius: 4px;
+  color: #2c3e50;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #16a085;
+  color: white;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #1abc9c;
 }
 
 .error-message {
-  color: red;
-  font-size: 14px;
-  margin-top: 5px;
+  color: #e74c3c;
+  margin-bottom: 15px;
 }
 
-
+/* Styles for right section */
 .right-section {
-  width: 60%; /* Adjust width as needed */
-  display:grid;
-  width: 200px;
-  float: left; /* Float left to position on the right side */
-  padding: 20px; /* Add padding for spacing */
-  box-sizing: border-box; /* Include padding in width calculation */
+  background-color: #2c3e50;
+  padding-left: 30px;
 }
 
 .website-card {
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: #34495e;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   padding: 20px;
+  border-radius: 5px;
   margin-bottom: 20px;
-  width: 500px;
+  transition: transform 0.3s ease;
+}
+
+.website-card:hover {
+  transform: translateY(-5px);
 }
 
 .website-header h2 {
-  font-size: 20px;
-  margin-bottom: 10px;
-}
-
-.website-header p {
-  font-size: 16px;
-  color: #666;
+  color: #1abc9c;
 }
 
 .website-details p {
-  font-size: 14px;
-  margin-bottom: 8px;
-}
-
-.button {
-  padding: 8px 16px;
-  background-color: red;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-left: 10px;
-}
-
-.button:hover {
-  background-color: darkred;
+  margin: 5px 0;
 }

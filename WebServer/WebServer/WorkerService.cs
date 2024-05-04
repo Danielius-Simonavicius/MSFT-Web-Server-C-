@@ -118,8 +118,8 @@ public class WorkerService : BackgroundService, IMessengerListener
         while (!threadCancellationToken.IsCancellationRequested)
         {
             var totalBytes = new List<byte>();
-            var buffer = new byte[16_384];
-            var handler = await httpServer.AcceptAsync(_cancellationToken);
+            var buffer = new byte[8192];
+            var handler = await httpServer.AcceptAsync();
             var request = new HttpRequestModel();
             var totalReceivedBytes = 0;
 
@@ -127,6 +127,12 @@ public class WorkerService : BackgroundService, IMessengerListener
             {
                 var received = await handler.ReceiveAsync(buffer, _cancellationToken);
                 totalReceivedBytes += received;
+                
+                if (received == 0)  // Check if the socket has been closed
+                {
+                    _logger.LogWarning("Socket closed by client");
+                    break;
+                }
 
                 if (totalBytes.Count == 0)
                 {
@@ -151,7 +157,15 @@ public class WorkerService : BackgroundService, IMessengerListener
             if (request.ContentType.StartsWith("multipart/form-data;") && request.RequestedPort is 9090 or 4200)
             {
                 _logger.LogInformation("request is to upload a new website");
-                WebsiteHostingService.LoadWebsite(totalBytes.ToArray(), request);
+                try
+                {
+                    //todo fix this parsing logic.
+                    WebsiteHostingService.LoadWebsite(totalBytes.ToArray(), request);
+                }
+                catch 
+                {
+                    _logger.LogInformation("failed to load website");
+                }
             }
 
             request.Client = handler;

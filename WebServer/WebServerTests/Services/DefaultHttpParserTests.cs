@@ -7,7 +7,7 @@ public class DefaultHttpParserTests
     [Fact]
     public void ParseHttpRequest_ReturnsModel()
     {
-        string httpInput = @" GET / HTTP/1.1
+        string httpInput = @"GET / HTTP/1.1
       Host: localhost:8080
       Connection: keep-alive
       User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36
@@ -25,7 +25,7 @@ public class DefaultHttpParserTests
 
         var model = service.ParseHttpRequest(httpInput);
         Assert.Equal("localhost:8080", model.Host);
-        Assert.Equal("GET / HTTP/1.1", model.RequestType);
+        Assert.Equal("GET", model.RequestType);
         
         
         Assert.Contains(new KeyValuePair<string, string>("Connection", "keep-alive"), model.Headers);

@@ -1,0 +1,125 @@
+/* Full-page background setup */
+.full-page-background {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #212121; /* Uniform dark grey background across the full page */
+    color: #ffffff;
+    min-height: 100vh;
+    min-width: 100vw;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  
+  /* Main container settings */
+  .main-container {
+    display: flex;
+    flex-direction: row;
+    box-sizing: border-box;
+    width: 90%; /* Optimal width */
+    max-width: 1200px; /* Maximum width for larger screens */
+    margin: 0 auto; /* Centering the container */
+    padding: 20px;
+    background: #212121; /* Same background as the full-page for uniformity */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5); /* Adding depth with shadow */
+  }
+  
+  /* Left section styling - Form */
+  .left-section {
+    width: 40%;
+    padding: 20px;
+  }
+  
+  .content-block {
+    font-size: 24px;
+    text-align: c;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #FFA500; /* Vibrant orange for headings */
+  }
+  
+  .uploadForm {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .input-container {
+    margin-bottom: 20px;
+  }
+  
+  input[type="text"],
+  input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    background: #333333; /* Slightly lighter black for input fields */
+    border: 1px solid #555; /* Dark border */
+    border-radius: 4px;
+    color: #fff;
+    font-size: 16px;
+  }
+  
+  input[type="text"]:focus,
+  input[type="file"]:focus {
+    border-color: #FFA500; /* Orange for focus */
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 5px;
+    color: #FFA500; /* Orange for labels */
+  }
+  
+  .error-message {
+    color: #FF4500; /* Brighter, more vivid orange for errors */
+    font-size: 14px;
+  }
+  
+  button {
+    width: auto;
+    padding: 12px 24px;
+    background-color: #FFA500; /* Consistent orange for buttons */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  button:hover {
+    background-color: #CC8400; /* Darker shade of orange on hover */
+  }
+  
+  /* Right section styling - Displaying websites */
+  .right-section {
+    width: 60%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .website-card {
+    background: #333333; /* Dark background for cards */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  .website-card:hover {
+    transform: translateY(-5px); /* Slight lift effect */
+    box-shadow: 0 4px 12px rgba(255, 165, 0, 0.6); /* Orange glow on hover */
+  }
+  
+  .website-header h2 {
+    font-size: 20px;
+    color: #FFA500; /* Orange for website names */
+  }
+  
+  .website-details p {
+    font-size: 16px;
+    color: #E8E8E8; /* Light grey for details */
+  }
+  

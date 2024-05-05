@@ -1,229 +1,222 @@
 using System.Collections.Concurrent;
-using System.Diagnostics.Eventing.Reader;
 using System.Net.Sockets;
 using System.Net;
-using System.Net.WebSockets;
-using System.Reflection.Emit;
 using System.Text;
-using Microsoft.Extensions.FileSystemGlobbing.Internal.Patterns;
 using Microsoft.Extensions.Options;
-using Microsoft.VisualBasic.CompilerServices;
+using Newtonsoft.Json;
 using WebServer.Models;
 using WebServer.Services;
 
 namespace WebServer;
 
-public class WorkerService : BackgroundService
+public class WorkerService : BackgroundService, IMessengerListener
 {
-    private readonly ServerConfigModel _config;
+ 
+    private readonly Dictionary<string, CancellationTokenSource> _websiteThreads = new();
+    private ServerConfigModel _config;
     private readonly ILogger<WorkerService> _logger;
-    private Thread _thread = null!;
 
     private readonly ConcurrentQueue<HttpRequestModel> _requestsQueue = new();
 
     private readonly IHttpRequestParser _parser;
+    private CancellationToken _cancellationToken;
+    private readonly IGetResponseService _responseService;
+
+    private readonly IMessengerService _messengerService;
+    private readonly IWebsiteHostingService WebsiteHostingService;
+    private readonly IConfigurationService _configurationService;
 
     public WorkerService(ILogger<WorkerService> logger,
-        IHttpRequestParser parser, IOptions<ServerConfigModel> config)
+        IHttpRequestParser parser,
+        IWebsiteHostingService websiteHostingService,
+        IMessengerService messengerService, 
+        IGetResponseService responseService,
+        IConfigurationService configurationService
+        )
     {
-        _config = config.Value;
-        //_serverPort = _config.Port;
+        _configurationService = configurationService;
+        _config = _configurationService.GetSettings();
         _logger = logger;
         _parser = parser;
+        WebsiteHostingService = websiteHostingService;
+        _messengerService = messengerService;
+        _responseService = responseService;
     }
 
-
-    private void StartServer(CancellationToken stoppingToken)
+    private void StartWebsites()
     {
+        _messengerService.AddNewWebSiteAddedListener(this);
+        _messengerService.AddConfigChangedListener(this);
         var websites = _config.Websites;
 
         foreach (var website in websites)
         {
-            _thread = new Thread(() => ConnectionThreadMethod(website, stoppingToken));
-            _thread.Start();
+            var threadCancellationToken = new CancellationTokenSource();
+            var thread = new Thread(() => ConnectionThreadMethod(website, threadCancellationToken));
+            thread.Start();
+            //Adds to dictionary of threads
+            _websiteThreads[website.WebsiteId] = threadCancellationToken;
         }
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        _cancellationToken = stoppingToken;
         await Task.Yield();
-        StartServer(stoppingToken);
+        StartWebsites();
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (_requestsQueue.TryDequeue(out var requestModel) && requestModel.Client != null)
+            try
             {
-                var handler = requestModel.Client;
-                var hostParts =
-                    requestModel.Host.Split(":"); //hostParts = localhost:8085 (trying to find port e.g. "8085")
-                int port = IntegerType.FromString(hostParts[1]);
-                await handler.SendToAsync(GetResponse(requestModel,
-                    _config.Websites.First((x) => x.WebsitePort == port)), handler.RemoteEndPoint!, stoppingToken);
-                handler.Close();
+                if (!_requestsQueue.TryDequeue(out var requestModel) || requestModel.Client == null) continue;
+                _ = Task.Run(async () =>
+                    {
+                        var handler = requestModel.Client;
+                        var website = _config.Websites.FirstOrDefault(x => x.WebsitePort == requestModel.RequestedPort);
+                        if (website == null)
+                        {
+                            _logger.LogWarning("Got Request for invalid website on port {port}", requestModel.RequestedPort);
+                            return;
+                        }
+                        await handler.SendToAsync(_responseService.GetResponse(requestModel, website, _config),
+                            handler.RemoteEndPoint!, stoppingToken);
+                        handler.Close();
+                    }, stoppingToken)
+                    .ContinueWith(t => _logger.LogCritical(t.Exception, null),
+                        TaskContinuationOptions.OnlyOnFaulted);
+                _logger.LogInformation($"\r\nwebsite threads running:{_websiteThreads.Count}");
             }
-
-            Thread.Sleep(100);
+            catch (Exception ex)
+            {
+                _logger.LogCritical(ex, null);
+            }
         }
+
+        _messengerService.RemoveWebSiteAddedListener(this);
     }
 
-    private void ConnectionThreadMethod(WebsiteConfigModel website, CancellationToken token)
+    private void ConnectionThreadMethod(WebsiteConfigModel website, CancellationTokenSource threadCancellationToken)
     {
         try
         {
-            IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, website.WebsitePort);
+            var endPoint = new IPEndPoint(IPAddress.Any, website.WebsitePort);
             var httpServer = new Socket(SocketType.Stream, ProtocolType.Tcp);
             httpServer.Bind(endPoint);
-            httpServer.Listen(100);
-            _ = StartListeningForData(httpServer, token);
+            httpServer.Listen(1000);
+            _logger.LogInformation($"Starting {endPoint}");
+            _ = StartListeningForData(httpServer, threadCancellationToken);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"{website.Path} Server could not start: {ex.Message}");
+            _logger.LogCritical($"{website.Path} Server could not start: {ex.Message}");
+            _logger.LogCritical(ex, null);
         }
     }
 
-    private async Task StartListeningForData(Socket httpServer, CancellationToken token)
+    private async Task StartListeningForData(Socket httpServer, CancellationTokenSource threadCancellationToken)
     {
-        while (!token.IsCancellationRequested)
+        while (!threadCancellationToken.IsCancellationRequested)
         {
-            var data = "";
-            var bytes = new byte[1_024];
-            var handler = await httpServer.AcceptAsync(token);
+            var totalBytes = new List<byte>();
+            var buffer = new byte[8192];
+            var handler = await httpServer.AcceptAsync();
+            var request = new HttpRequestModel();
+            var totalReceivedBytes = 0;
 
-            while (!token.IsCancellationRequested)
+            while (!threadCancellationToken.IsCancellationRequested)
             {
-                var received = await handler.ReceiveAsync(bytes, token);
-                var partialData = Encoding.ASCII.GetString(bytes, 0, received);
-                data += partialData;
-
-                if (data.Contains("\r\n"))
+                var received = await handler.ReceiveAsync(buffer, _cancellationToken);
+                totalReceivedBytes += received;
+                
+                if (received == 0)  // Check if the socket has been closed
                 {
+                    _logger.LogWarning("Socket closed by client");
                     break;
+                }
+
+                if (totalBytes.Count == 0)
+                {
+                    var partialData = Encoding.ASCII.GetString(buffer, 0, received);
+                    request = _parser.ParseHttpRequest(partialData);
+                    LogRequestData(partialData);
+                }
+
+                totalBytes.AddRange(buffer);
+
+                // Check if the received data contains a complete message
+                if (received < buffer.Length)
+                {
+                    // If the received data is less than the buffer size, assume it's the end of the message
+                    break;
+                }
+
+                _logger.LogInformation($"Total MB received: {totalReceivedBytes / (1024 * 1024)}");
+            }
+
+            //If request is to upload a new website
+            if (request.ContentType.StartsWith("multipart/form-data;") && request.RequestedPort is 9090 or 4200)
+            {
+                _logger.LogInformation("request is to upload a new website");
+                try
+                {
+                    
+                    _ = Task.Run(() => WebsiteHostingService.LoadWebsite(totalBytes.ToArray(), request),
+                        threadCancellationToken.Token)
+                        .ContinueWith(t => 
+                                      _logger.LogCritical(t.Exception, null), TaskContinuationOptions.OnlyOnFaulted);
+                }
+                catch 
+                {
+                    _logger.LogInformation("failed to load website");
                 }
             }
 
-
-            LogRequestData(data);
-            var request = _parser.ParseHttpRequest(data);
             request.Client = handler;
             _requestsQueue.Enqueue(request);
-
-
-            data = string.Empty;
         }
     }
-
-    private byte[] GetResponse(HttpRequestModel requestModel, WebsiteConfigModel website)
-    {
-        string statusCode = "200 OK";
-        string fileName = requestModel.Path; // File path e.g. "/styles-XHU57CVJ.css"
-        string methodType = requestModel.RequestType; // Request type e.g. GET, PUT, POST, DELETE
-        string webSite = website.Path;
-
-        //Re-routing to default page in website
-        if (string.IsNullOrEmpty(fileName) || fileName.Equals("/"))
-        {
-            fileName = website.DefaultPage; // fileName = "index.html"
-        }
-        //Otherwise gets filename client wants 
-        else if (fileName.StartsWith($"/"))
-        {
-            fileName = fileName.Substring(1);
-        }
-
-
-        var rootFolder = _config.RootFolder;
-
-        var requestedFile = Path.Combine(rootFolder, webSite, fileName);
-
-        if (methodType.Equals("GET")) // Do we sort methods in here like this? one after the other?
-        {
-            // put logic in here
-        }
-        else if (methodType.Equals("POST") && fileName.Equals("upload"))
-        {
-            statusCode = "200 OK";
-            String responseHeader =
-                $"HTTP/1.1 {statusCode}\r\n" +
-                "Server: Microsoft_web_server\r\n" +
-                $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n\r\n";
-
-            var responseData = Encoding.ASCII.GetBytes(responseHeader);
-            return responseData.ToArray();
-        }
-        else if (methodType.Equals("OPTIONS"))
-        {
-            return OptionsResponse(website);
-        }
-
-
-        // File doesn't exist, return 404 Not Found
-        if (!File.Exists(requestedFile))
-        {
-            Console.WriteLine($"File not found: {requestedFile}");
-            return NotFound404(website, statusCode);
-        }
-
-
-        var file = File.ReadAllBytes(requestedFile);
-
-
-        string contentType = FindContentType(requestedFile);
-
-        String resHeader =
-            $"HTTP/1.1 {statusCode}\r\n" +
-            "Server: Microsoft_web_server\r\n" +
-            $"Content-Type: {contentType}; charset=UTF-8\r\n" +
-            $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n\r\n";
-
-        var resData = Encoding.ASCII.GetBytes(resHeader).Concat(file);
-        return resData.ToArray();
-    }
-
-    private byte[] OptionsResponse(WebsiteConfigModel website)
-    {
-        string statusCode = "200 OK";
-        string responseHeader =
-            $"HTTP/1.1 {statusCode}\r\n" +
-            "Server: Microsoft_web_server\r\n" +
-            "Allow: GET, POST, OPTIONS\r\n" +
-            "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n" +
-            "Access-Control-Allow-Headers: Content-Type\r\n" +
-            $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n" + 
-            "\r\n";
-
-        var responseData = Encoding.ASCII.GetBytes(responseHeader);
-        return responseData;
-    }
-
-    public static string FindContentType(string requestedFile)
-    {
-        switch (Path.GetExtension(requestedFile).ToLowerInvariant())
-        {
-            case ".js":
-                return "text/javascript";
-            case ".css":
-                return "text/css";
-            default:
-                return "text/html";
-        }
-    }
-
-
-    public byte[] NotFound404(WebsiteConfigModel website, string statusCode)
-    {
-        statusCode = "404 Not found";
-        String responseHeader =
-            $"HTTP/1.1 {statusCode}\r\n" +
-            "Server: Microsoft_web_server\r\n" +
-            $"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n\r\n";
-
-        var responseData = Encoding.ASCII.GetBytes(responseHeader);
-        return responseData.ToArray();
-    }
-
 
     private void LogRequestData(string requestData)
     {
-        _logger.LogInformation($"\n{requestData}");
+        var parts = requestData.Split("\r\n\r\n");
+        _logger.LogInformation($"\n{parts[0]}");
+    }
+
+    public void NewWebSiteAdded(WebsiteConfigModel website)
+    {
+        _config = this._configurationService.GetSettings();
+        _logger.LogInformation($"Starting Website {website.WebsiteId} thread");
+        var threadCancellationToken = new CancellationTokenSource();
+        var thread = new Thread(() => ConnectionThreadMethod(website, threadCancellationToken));
+        thread.Start();
+
+        // Add the thread and its stop flag to the dictionary
+        _websiteThreads[website.WebsiteId] = threadCancellationToken;
+    }
+
+    public void WebSiteRemoved(WebsiteConfigModel website)
+    {
+        _config = this._configurationService.GetSettings();
+        if (_websiteThreads.TryGetValue(website.WebsiteId, out var cancellationToken))
+        {
+            _logger.LogInformation($"Stopping Website {website.WebsiteId} thread");
+            // Signal the thread to stop
+            cancellationToken.Cancel();
+            _websiteThreads.TryGetValue(website.WebsiteId, out var threadInfo);
+            
+            //Delete website folder
+            var pathToWebsite = Path.Combine(_config.RootFolder, website.WebsiteId);
+            Directory.Delete(pathToWebsite, true);
+
+
+            // Remove the thread from the dictionary
+            _websiteThreads.Remove(website.WebsiteId);
+           
+        }
+    }
+
+    public void ConfigChanged()
+    {
+        _config = this._configurationService.GetSettings();
     }
 }

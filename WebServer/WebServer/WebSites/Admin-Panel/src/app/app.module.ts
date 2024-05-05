@@ -1,16 +1,19 @@
 import { NgModule } from '@angular/core';
-import { UploadWebsiteService } from 'src/services/upload-website.service';
+import { WebsiteService } from 'src/services/website.service';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import {MatProgressBarModule} from '@angular/material/progress-bar';
+import { UploadPageComponent } from './pages/upload-page/upload-page.component';
+import { EditWebsiteComponent } from './pages/edit-website/edit-website.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    UploadPageComponent,
+    EditWebsiteComponent
   ],
   imports: [
     BrowserModule,
@@ -18,9 +21,8 @@ import {MatProgressBarModule} from '@angular/material/progress-bar';
     FormsModule,
     HttpClientModule,
     BrowserAnimationsModule,
-    MatProgressBarModule
   ],
-  providers: [UploadWebsiteService],
+  providers: [WebsiteService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

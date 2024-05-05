@@ -1,0 +1,75 @@
+/* Full-page background setup */
+.full-page-background {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #212121; /* Uniform dark grey background */
+  color: #ffffff;
+  min-height: 100vh;
+  min-width: 100vw;
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0;
+  margin: 0;
+}
+
+/* Container for website details */
+.website-container {
+  display: flex;
+  flex-direction: column;
+  width: 80%; /* Controlled width for better layout management */
+  max-width: 600px; /* Limits maximum width to enhance readability */
+  background: #333333; /* Dark background for the container */
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6); /* Stronger shadow for depth */
+}
+
+.website-header,
+.website-details {
+  display: flex;
+  flex-direction: column;
+}
+
+p {
+  display: flex;
+  align-items: center;
+  margin: 10px 0;
+}
+
+label {
+  color: #FFA500; /* Orange for labels */
+  width: 150px; /* Fixed width for all labels to align inputs */
+}
+
+input[type="text"] {
+  flex: 1;
+  padding: 8px;
+  background: transparent;
+  border: 1px solid #555; /* Subtle border for inputs */
+  border-radius: 4px;
+  color: #fff;
+  font-size: 16px;
+  outline: none;
+}
+
+input[type="text"]:focus {
+  border-color: #FFA500; /* Orange border on focus */
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #FFA500; /* Orange for buttons */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+button:hover {
+  background-color: #CC8400; /* Darker orange on hover */
+  transform: scale(1.1); /* Slight enlargement on hover */
+}

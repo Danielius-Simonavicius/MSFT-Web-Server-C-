@@ -2,27 +2,33 @@ using WebServer;
 using WebServer.Models;
 using WebServer.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace WebServer
 {
     class Program
     {
-        static void Main(String[] args)
+        private static void Main(string[] args)
         {
             var builder = Host.CreateApplicationBuilder();
 
             builder.Services.AddTransient<IHttpRequestParser, DefaultHttpParser>();
+            builder.Services.AddTransient<IWebsiteHostingService, WebsiteHostingService>();
+            
+            builder.Services.AddTransient<IGetResponseService, DefaultResponseService>();
+            builder.Services.AddTransient<IConfigurationService, DefaultConfigurationService>();
             builder.Services.AddHostedService<WorkerService>();
 
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("WebsiteConfig.json", optional: false,
-                    reloadOnChange: true) 
-                .Build();
-
-            builder.Services.AddSingleton(configuration); // Add configuration to services
-            builder.Services.Configure<ServerConfigModel>(configuration.GetSection("ServerConfig"));
-            
+            builder.Services.AddSingleton<IMessengerService, MessengerService>();
+            // var configuration = new ConfigurationBuilder()
+            //     .AddJsonFile("WebsiteConfig.json", optional: false,
+            //         reloadOnChange: true) 
+            //     .Build();
+            // builder.Services.AddSingleton(configuration); 
+          
             var host = builder.Build();
+            host.Services.GetRequiredService<IOptionsMonitor<ServerConfigModel>>();
+            
             host.Run();
         }
     }

@@ -102,7 +102,7 @@ public class WebsiteHostingService : IWebsiteHostingService
 
     private bool ExtractAndUnzipWebsiteFile(byte[] zipData, string uniqueFolderName)
     {
-        _logger.LogInformation($"ExtractAndUnzipWebsiteFile: {zipData.Length} bytes");
+        _logger.LogInformation($"ExtractAndUnzipWebsiteFile: {zipData?.Length?? 0} bytes");
         try
         {
             // Convert byte array to memory stream

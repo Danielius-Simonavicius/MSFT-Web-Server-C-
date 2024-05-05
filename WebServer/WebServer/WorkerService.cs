@@ -159,8 +159,11 @@ public class WorkerService : BackgroundService, IMessengerListener
                 _logger.LogInformation("request is to upload a new website");
                 try
                 {
-                    //todo fix this parsing logic.
-                    WebsiteHostingService.LoadWebsite(totalBytes.ToArray(), request);
+                    
+                    _ = Task.Run(() => WebsiteHostingService.LoadWebsite(totalBytes.ToArray(), request),
+                        threadCancellationToken.Token)
+                        .ContinueWith(t => 
+                                      _logger.LogCritical(t.Exception, null), TaskContinuationOptions.OnlyOnFaulted);
                 }
                 catch 
                 {

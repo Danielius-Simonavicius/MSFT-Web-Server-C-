@@ -2,36 +2,12 @@
   "RootFolder": "./WebSites",
   "Websites": [
     {
-      "WebsiteId": "bbaa6ed2-7583-43de-b911-fbc5e7464679",
-      "WebsiteName": "AdminPanel",
-      "AllowedHosts": "*",
-      "DefaultPage": "index.html",
-      "Path": "Admin-Panel/dist/admin-panel",
-      "WebsitePort": 9090
-    },
-    {
-      "WebsiteId": "ef7e9340-034a-4382-ab89-19c78ab2cf25",
-      "WebsiteName": "frontend`",
-      "AllowedHosts": "*",
-      "DefaultPage": "index.html",
-      "Path": "ef7e9340-034a-4382-ab89-19c78ab2cf25/frontend",
-      "WebsitePort": 8003
-    },
-    {
       "WebsiteId": "70bf3eeb-6360-4e41-b399-543f39136afb",
       "WebsiteName": "XtraceLoginPage",
       "AllowedHosts": "*",
       "DefaultPage": "index.html",
       "Path": "XtraceLoginPage",
       "WebsitePort": 9091
-    },
-    {
-      "WebsiteId": "abe20501-ee45-44ed-aa7b-ed5b4c94d795",
-      "WebsiteName": "MehirsLoginPage",
-      "AllowedHosts": "test-blyat",
-      "DefaultPage": "index.html",
-      "Path": "MehirsLoginPage",
-      "WebsitePort": 9092
     },
     {
       "WebsiteId": "d114c0a0-7d95-4fd1-97df-9427ced9e62c",
@@ -42,12 +18,36 @@
       "WebsitePort": 9093
     },
     {
+      "WebsiteId": "bbaa6ed2-7583-43de-b911-fbc5e7464679",
+      "WebsiteName": "AdminPanel",
+      "AllowedHosts": "*",
+      "DefaultPage": "index.html",
+      "Path": "Admin-Panel/dist/admin-panel",
+      "WebsitePort": 9090
+    },
+    {
       "WebsiteId": "0daff854-f4f1-47dc-baa7-b0a640d16afc",
-      "WebsiteName": "gymWebsite",
+      "WebsiteName": "Gym Website",
       "AllowedHosts": "*",
       "DefaultPage": "index.html",
       "Path": "0daff854-f4f1-47dc-baa7-b0a640d16afc/gymWebsite",
       "WebsitePort": 8001
+    },
+    {
+      "WebsiteId": "abe20501-ee45-44ed-aa7b-ed5b4c94d795",
+      "WebsiteName": "MehirsLoginPage",
+      "AllowedHosts": "*",
+      "DefaultPage": "index.html",
+      "Path": "MehirsLoginPage",
+      "WebsitePort": 9092
+    },
+    {
+      "WebsiteId": "ef7e9340-034a-4382-ab89-19c78ab2cf25",
+      "WebsiteName": "Frontend",
+      "AllowedHosts": "*",
+      "DefaultPage": "index.html",
+      "Path": "ef7e9340-034a-4382-ab89-19c78ab2cf25/frontend",
+      "WebsitePort": 8003
     },
     {
       "WebsiteId": "ca1bf2f6-e1a4-4a0b-816c-72b7c0ad62d1",

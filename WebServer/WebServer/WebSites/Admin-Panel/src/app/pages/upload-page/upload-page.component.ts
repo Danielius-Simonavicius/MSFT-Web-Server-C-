@@ -12,11 +12,11 @@ import { NgForm } from '@angular/forms';
 })
 export class UploadPageComponent implements OnInit{
   formData = new FormData();
-  
+  fileAttached: boolean = false;  // Track if a file is being dragged over the drop zone
   websites$: Observable<Website[]> | undefined; 
   dataFields = new UploadWebsite();
   submitted: boolean = false;
-
+  fileName?: string;
   constructor(private websiteService: WebsiteService) {}
 
 
@@ -41,6 +41,8 @@ export class UploadPageComponent implements OnInit{
     if (files.length > 0) {
       const file =  event.target.files[0];
       this.formData.append("WebsiteFile", file);
+      this.fileAttached = true;
+      this.fileName = file.name;
     }
   }
 
@@ -76,5 +78,29 @@ export class UploadPageComponent implements OnInit{
         console.error('Error deleting the website:', error);
       }
     });
+  }
+
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  onDrop(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.fileAttached = true;
+    if (event.dataTransfer && event.dataTransfer.files.length) {
+      const file = event.dataTransfer.files[0];
+      this.formData.set("WebsiteFile", file);
+      console.log('File dropped:', file.name);
+
+      this.fileName = file.name;
+    }
+  }
+
+  onDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+  
   }
 }

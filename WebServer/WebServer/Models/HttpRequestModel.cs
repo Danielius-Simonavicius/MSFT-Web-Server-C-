@@ -1,3 +1,4 @@
+using System.Net.Security;
 using System.Net.Sockets;
 
 namespace WebServer.Models;
@@ -11,7 +12,7 @@ public class HttpRequestModel
     
     public int RequestedPort { get; set; }
 
-    public Socket? Client { get; set; }
+    public Stream? Client { get; set; }
     public string ContentType { get; set; } = string.Empty;
     public int ContentLength { get; set; }
     public IList<KeyValuePair<string, string>> Headers { get; set; } = new List<KeyValuePair<string, string>>();

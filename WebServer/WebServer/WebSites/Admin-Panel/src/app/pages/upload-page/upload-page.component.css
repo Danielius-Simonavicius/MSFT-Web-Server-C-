@@ -1,9 +1,10 @@
+/* Full-page background setup */
 .full-page-background {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(#141e30, #243b55);
-  color: #fff;
+  background: #F8F9FA; /* Very light grey, almost white, for a clean background */
+  color: #4A154B; /* Deep purple for contrasted text */
   min-height: 100vh;
   min-width: 100vw;
   margin: 0;
@@ -11,185 +12,140 @@
   position: absolute;
   top: 0;
   left: 0;
-  background-attachment: fixed; /* This keeps the background fixed during scrolling */
-  background-repeat: no-repeat; /* Prevents the background from repeating */
-  background-size: cover; 
 }
 
+/* Main container settings */
 .main-container {
   display: flex;
   flex-direction: row;
   box-sizing: border-box;
-  padding: 20px 0;
-  background: linear-gradient(#141e30, #243b55);
-  color: #fff;
-  font-family: sans-serif;
-  min-height: 100vh; 
-  width: 100vw;
+  width: 90%; /* Optimal width */
+  max-width: 1200px; /* Maximum width for larger screens */
+  margin: 0 auto; /* Centering the container */
+  padding: 20px;
+  background: #FFFFFF; /* Pure white for the main content area */
+  box-shadow: 0 4px 8px rgba(196, 178, 216, 0.5); /* Soft purple shadow for depth */
 }
 
-
+/* Left section styling - Form */
 .left-section {
   width: 40%;
   padding: 20px;
-  box-sizing: border-box;
-  border-right: 2px solid #666;
 }
 
 .content-block {
   font-size: 24px;
+  text-align: center;
   font-weight: bold;
-  margin-top: 0px;
   margin-bottom: 20px;
+  color: #9C27B0; /* Vibrant purple for headings */
 }
 
 .uploadForm {
-  width: 100%;
-  display: block;
-  padding-top: 20px;
+  display: flex;
+  flex-direction: column;
 }
 
-.uploadForm input,
-.uploadForm button {
+.input-container {
+  margin-bottom: 20px;
+}
+
+input[type="text"],
+input[type="file"] {
   width: 100%;
-  margin-bottom: 10px;
+  padding: 10px;
+  background: #EDE7F6; /* Light purple background for input fields */
+  border: 1px solid #CE93D8; /* Softer purple border */
+  border-radius: 4px;
+  color: #4A154B; /* Deep purple text */
+  font-size: 16px;
+}
+
+input[type="text"]:focus {
+  border-color: #BA68C8; /* Darker purple for focus */
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  color: #9C27B0; /* Matching vibrant purple for labels */
 }
 
 .error-message {
-  color: red;
+  color: #E91E63; /* Bright pink for errors, ensuring visibility */
   font-size: 14px;
-  margin-top: 5px;
 }
 
+button {
+  width: auto;
+  padding: 12px 24px;
+  background-color: #9C27B0; /* Consistent vibrant purple for buttons */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #BA68C8; /* Darker shade of purple on hover */
+}
+
+/* Right section styling - Displaying websites */
 .right-section {
   width: 60%;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
   padding: 20px;
-  box-sizing: border-box;
-}
-
-
-.button {
-  padding: 8px 16px;
-  background-color: #03e9f4;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-left: 10px;
-}
-
-.button:hover {
-  background-color: #3b3b3f;
-}
-
-.uploadForm input[type="text"],
-.uploadForm input[type="file"],
-.uploadForm button {
-  width: 100%;
-  padding: 10px 0;
-  font-size: 16px;
-  color: #fff;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid #fff;
-  outline: none;
-  transition: border-color 0.5s;
-}
-
-.uploadForm input[type="text"]:focus,
-.uploadForm input[type="file"]:focus,
-.uploadForm button:focus {
-  border-bottom: 2px solid #03e9f4;
-}
-
-.uploadForm input[type="text"]:focus + label,
-.uploadForm input[type="file"]:focus + label {
-  top: -20px;
-  font-size: 12px;
-  color: #03e9f4;
-}
-
-.uploadForm input:valid + label {
-  top: -20px;
-  font-size: 12px;
-  color: #03e9f4;
-}
-
-.uploadForm label {
-  position: absolute;
-  top: 10px;
-  left: 0;
-  color: #fff;
-  pointer-events: none;
-  transition: 0.5s;
-  font-size: 16px;
-}
-
-.uploadForm .input-container {
-  position: relative;
-  margin-bottom: 30px;
-}
-
-.uploadForm .input-container input {
-  padding: 10px 0 10px 10px;
-}
-
-.button:hover {
-  background-color: #3b3b3f;
 }
 
 .website-card {
-  border: 1px solid #666;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: #FAF1F8; /* Very light pink for cards, adding warmth */
   padding: 20px;
-  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(196, 178, 216, 0.3);
 }
 
 .website-card:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 15px rgba(3, 169, 244, 0.7);
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(233, 30, 99, 0.5); /* Pink glow on hover */
 }
-
 
 .website-header h2 {
+  font-size: 20px;
+  color: #9C27B0; /* Purple for website names */
+}
+
+.website-details p {
   font-size: 16px;
-  margin-bottom: 8px;
+  color: #4A154B; /* Deep purple for details */
 }
 
-.website-card button:last-of-type {
-  padding: 12px 20px;
-  font-size: 18px;
-  background-color: #021e34;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s, transform 0.3s;
-}
-
-.website-card button:last-of-type:hover {
-  background-color: #001a81;
-  transform: scale(1.1);
-}
-
-.uploadForm button[type="submit"] {
-  padding: 10px 16px;
-  font-size: 16px;
-
+.drag-drop-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  background-color: #EDE7F6;
+  border: 2px dashed #9C27B0; /* Purple dashed border for the drop zone */
   border-radius: 4px;
+  color: #4A154B;
+  font-size: 16px;
+  padding: 20px;
   cursor: pointer;
-  transition: background-color 0.3s, transform 0.3s;
+  transition: background-color 0.3s ease;
 }
 
-.uploadForm button[type="submit"]:hover {
-  background-color: #021e34;
-  transform: scale(1.07);
+.drag-drop-zone:hover {
+  background-color: #D1C4E9; /* Lighter purple on hover */
 }
 
-.website-card button {
-  margin-top: 20px;
+input[type="file"] {
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  z-index: -1;
 }

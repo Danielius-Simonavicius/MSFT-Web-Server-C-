@@ -1,14 +1,17 @@
 <div class="full-page-background">
     <div class="website-container" *ngIf="website">
         <div class="website-header">
-            <h2>{{ website.WebsiteName }}</h2>
+            <p>
+                <label for="websiteName">Website Name:</label>
+                <input id="websiteName" [(ngModel)]="website.WebsiteName" type="text" />
+            </p>
             <p>
                 <label for="path">Path:</label>
                 <input id="path" [(ngModel)]="website.Path" type="text" />
             </p>
             <p>
                 <label for="hosts">Allowed Hosts:</label>
-                <input id="hosts" [(ngModel)]="website.AllowedHosts" type="text" class="no-border" />
+                <input id="hosts" [(ngModel)]="website.AllowedHosts" type="text" />
             </p>
         </div>
         <div class="website-details">
@@ -17,10 +20,9 @@
                 <input id="defaultPage" [(ngModel)]="website.DefaultPage" type="text" />
             </p>
             <p>Website Port: {{ website.WebsitePort }}</p>
-
             <button (click)="updateWebsite(website)" type="submit">Update</button>
+            <button (click)="deleteWebsite(website.WebsiteId)" class="delete-button">Delete</button>
 
-            <button (click)="deleteWebsite(website.WebsiteId)">Delete</button>
         </div>
     </div>
 </div>

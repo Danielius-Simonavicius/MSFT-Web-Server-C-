@@ -18,16 +18,14 @@ export class EditWebsiteComponent implements OnInit {
     private activatedRoute: ActivatedRoute
   ) {}
   ngOnInit(): void {
-
     this.activatedRoute.params.subscribe((params) => {
-        this.loadData(params['WebsiteId']);
+      this.loadData(params['WebsiteId']);
     });
   }
 
   loadData(id: string) {
     this.websiteService.getWebsite(id).subscribe((x) => {
       this.website = x;
-      console.log(this.website);
     });
   }
 
@@ -36,6 +34,7 @@ export class EditWebsiteComponent implements OnInit {
       next: () => {
         // Optionally display a message or handle the UI update
         console.log('Website deleted successfully');
+        this.router.navigate(['/upload-page']);
       },
       error: (error: any) => {
         console.error('Error deleting the website:', error);
@@ -43,11 +42,9 @@ export class EditWebsiteComponent implements OnInit {
     });
   }
 
-  updateWebsite(updatedWebsite: Website){
-    this.websiteService.updateWebsite(updatedWebsite).subscribe((x)=> {
-      if(x){
-        this.loadData;
-      }
-    })
+  updateWebsite(updatedWebsite: Website) {
+    this.websiteService.updateWebsite(updatedWebsite).subscribe();
+    this.loadData;
+    this.router.navigate(['/upload-page']);
   }
 }

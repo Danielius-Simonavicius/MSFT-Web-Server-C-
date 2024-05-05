@@ -1,12 +1,13 @@
 <div class="full-page-background">
   <div class="main-container">
+       <!-- upload wesbisite section -->
     <div class="left-section">
       <h2 class="content-block">Admin Panel</h2>
       <form class="uploadForm" #websiteUpload="ngForm" (ngSubmit)="onSubmit(websiteUpload)" novalidate>
         <div class="input-container">
+          <label for="WebsiteName">Website Name</label>
           <input type="text" id="WebsiteName" name="WebsiteName" placeholder=" " [(ngModel)]="dataFields.WebsiteName"
             required>
-          <label for="WebsiteName">Website Name</label>
           <div *ngIf="websiteUpload.submitted && websiteUpload.controls['WebsiteName'].errors?.['required']"
             class="error-message">
             WebsiteName is required.
@@ -14,9 +15,9 @@
         </div>
 
         <div class="input-container">
+          <label for="allowedHosts">Allowed Hosts</label> 
           <input type="text" id="allowedHosts" name="allowedHosts" placeholder=" " [(ngModel)]="dataFields.allowedHosts"
             required>
-          <label for="allowedHosts">Allowed Hosts</label>
           <div *ngIf="websiteUpload.submitted && websiteUpload.controls['allowedHosts'].errors?.['required']"
             class="error-message">
             AllowedHosts is required.
@@ -24,8 +25,8 @@
         </div>
 
         <div class="input-container">
-          <input type="text" id="path" name="path" placeholder=" " [(ngModel)]="dataFields.path" required>
           <label for="path">Path</label>
+          <input type="text" id="path" name="path" placeholder=" " [(ngModel)]="dataFields.path" required>
           <div *ngIf="websiteUpload.submitted && websiteUpload.controls['path'].errors?.['required']"
             class="error-message">
             Path is required.
@@ -33,9 +34,9 @@
         </div>
 
         <div class="input-container">
+          <label for="defaultPage">Default Page</label>
           <input type="text" id="defaultPage" name="defaultPage" placeholder=" " [(ngModel)]="dataFields.defaultPage"
             required>
-          <label for="defaultPage">Default Page</label>
           <div *ngIf="websiteUpload.submitted && websiteUpload.controls['defaultPage'].errors?.['required']"
             class="error-message">
             Default Page is required.
@@ -43,36 +44,22 @@
         </div>
 
         <div class="input-container">
-          <input type="file" id="folder" name="folder" accept=".zip,.rar,.7zip" (change)="onFolderSelected($event)"
-            required>
-          <label for="folder"></label>
+          <input type="file" id="folder" name="folder" accept=".zip,.rar,.7zip" (change)="onFolderSelected($event)" hidden>
+          <label for="folder" class="drag-drop-zone" (drop)="onDrop($event)" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)">
+            <div *ngIf="fileAttached==false">Drag and drop your file here or click to browse</div>
+            <div *ngIf="fileAttached">
+              <label>File Attached: {{fileName}}</label>
+            </div>
+          </label>
         </div>
-
+      
         <button type="submit">Upload</button>
       </form>
     </div>
 
-    <!-- <div class = dropzone>
-    <input type="file" #fileDropRef id = "fileDropRef" multiple (change)="onFolderSelected($event)"/>
-    <img src = "assets/img/dnd/ic-upload-file.svg" alt="">
-    <h3>Drag and drop folder here</h3>
-    <h3>or</h3>
-    <label for="fileDropRef">Browse for file</label>
-  </div> -->
 
-    <div *ngIf="submitted">
-      <!-- <div class="progress">
-      <mat-progress-bar mode="indeterminate" value = "uploadProgress"></mat-progress-bar>
-    </div> -->
 
-      <h3>Submitted Data:</h3>
-      {{websiteUpload.value | json }}
-      <!-- <p>Name: {{ formData.name }}</p>
-    <p>AllowedHosts: {{ formData.allowedHosts }}</p>
-    <p>Path: {{ formData.path }}</p>
-    <p>Default Page: {{ formData.defaultPage }}</p> -->
-    </div>
-
+    <!-- websites display section -->
     <div class="right-section">
       <div *ngFor="let website of websites$ | async" class="website-card"
         [routerLink]="['/edit-website', website.WebsiteId]">
@@ -85,7 +72,6 @@
           <p>Default Page: {{ website.DefaultPage }}</p>
           <p>Website Port: {{ website.WebsitePort }}</p>
         </div>
-        <button (click)="deleteWebsite(website.WebsiteId)">Delete</button>
       </div>
     </div>
   </div>

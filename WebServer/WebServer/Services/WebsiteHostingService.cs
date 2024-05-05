@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using WebServer.Helpers;
 using WebServer.Models;
 using static System.Text.RegularExpressions.Regex;
 
@@ -27,9 +28,10 @@ public class WebsiteHostingService : IWebsiteHostingService
 
     public void LoadWebsite(byte[] data, HttpRequestModel request)
     {
+        _logger.LogInformation($"LoadWebsite: {data.Length} bytes");
         // Split the byte array by ------Webkitboundary
         var parsedResult = ParseUploadData(data, request.ContentType);
-        
+        _logger.LogInformation($"LoadWebsite AFTER ParseUploadData: {parsedResult}");
         //If extracting file wasn't successful, dont add to WebsiteConfig.json
         if (!ExtractAndUnzipWebsiteFile(parsedResult.FileContent,
                 parsedResult.UniqueFolderName)) return;
@@ -45,7 +47,6 @@ public class WebsiteHostingService : IWebsiteHostingService
             {
                 _messengerService.SendNewWebsiteEvent(parsedResult.NewWebsite);
             }
-
         }
         catch (Exception e)
         {
@@ -56,43 +57,52 @@ public class WebsiteHostingService : IWebsiteHostingService
 
     public ParseResultModel? ParseUploadData(byte[] data, string contentType)
     {
-        ParseResultModel result = new ParseResultModel();
-        var match = Match(contentType, @"boundary=(?<boundary>.+)");
-        var boundary = match.Success ? match.Groups["boundary"].Value.Trim() : "";
-
-        var delimiter = Encoding.ASCII.GetBytes("--" + boundary);
-
-        //Splitting upload data into parts by the boundry (0 is header, 1 in file content, 2 and onwards is part of form data object)
-        var parts = SplitByteArray(data, delimiter);
-        //var stringParts = parts.ConvertAll(bytes => Encoding.ASCII.GetString(bytes)).ToArray();
-
-        //This removes the filecontents header
-        result.FileContent = ExtractFileContent(parts[1]);
-        result.UniqueFolderName = Guid.NewGuid().ToString();
-        result.NewWebsite = new WebsiteConfigModel
+        try
         {
-            WebsiteId = result.UniqueFolderName,
-            WebsiteName = ExtractValue("WebsiteName"),
-            AllowedHosts = ExtractValue("AllowedHosts"),
-            Path = $"{result.UniqueFolderName}/{ExtractValue("Path")}",
-            DefaultPage = ExtractValue("DefaultPage"),
-            WebsitePort = FindAvailablePort()
-        };
+            _logger.LogInformation($"ParseUploadData: {data.Length} bytes, {contentType}");
+            ParseResultModel result = new ParseResultModel();
+            var match = Match(contentType, @"boundary=(?<boundary>.+)");
+            var boundary = match.Success ? match.Groups["boundary"].Value.Trim() : "";
 
-        return result;
+            var delimiter = Encoding.UTF8.GetBytes($"--{boundary}" );
 
-        string ExtractValue(string key)
-        {
-            var input = Encoding.ASCII.GetString(data);
-            var pattern = $@"\r\nContent-Disposition: form-data; name=""{key}""\r\n\r\n(.+?)\r\n";
-            var _match = Match(input, pattern);
+            //Splitting upload data into parts by the boundary (0 is header, 1 in file content, 2 and onwards is part of form data object)
+            var parts = SplitByteArray(data, delimiter);
+            parts.ToList()
+                .ForEach(part =>
+                {
+                    _logger.LogInformation($"ParseUploadData: {parts.IndexOf(part)} -> size {part.Length}"); 
+                });
+            
+            //This removes the file-contents header
+            result.FileContent = ExtractFileContent(parts);
+            result.UniqueFolderName = Guid.NewGuid().ToString();
+            _logger.LogInformation($"ParseUploadData finishing: {result}");
+            result.NewWebsite = new WebsiteConfigModel
+            {
+                WebsiteId = result.UniqueFolderName,
+                WebsiteName = data.ExtractValue("WebsiteName"),
+                AllowedHosts = data.ExtractValue("AllowedHosts"),
+                Path = $"{result.UniqueFolderName}/{data.ExtractValue("Path")}",
+                DefaultPage = data.ExtractValue("DefaultPage"),
+                WebsitePort = FindAvailablePort()
+            };
 
-            return _match.Groups[1].Value;
+            return result;
         }
+        catch (Exception ex)
+        {
+            _logger.LogCritical(ex, null);
+            throw;
+        }
+       
     }
+    
+   
 
     private bool ExtractAndUnzipWebsiteFile(byte[] zipData, string uniqueFolderName)
     {
+        _logger.LogInformation($"ExtractAndUnzipWebsiteFile: {zipData.Length} bytes");
         try
         {
             // Convert byte array to memory stream
@@ -126,23 +136,28 @@ public class WebsiteHostingService : IWebsiteHostingService
         return true;
     }
 
-    private byte[] ExtractFileContent(byte[] byteArray)
+    private byte[] ExtractFileContent(IList<byte[]> byteArrays)
     {
         try
         {
             const string pkSignature = "PK";
-            var pkBytes = Encoding.ASCII.GetBytes(pkSignature);
-            var index = IndexOf(byteArray, pkBytes, 0);
-            if (index != -1)
+            var pkBytes = Encoding.UTF8.GetBytes(pkSignature);
+            foreach (var byteArray in byteArrays)
             {
-                // Return the file content byte array starting from "PK"
-                return SubArray(byteArray, index, byteArray.Length - index);
+                var index = IndexOf(byteArray, pkBytes, 0);
+                if (index != -1)
+                {
+                    // Return the file content byte array starting from "PK"
+                    return SubArray(byteArray, index, byteArray.Length - index);
+                }
             }
+          
         }
         catch (Exception e)
         {
             _logger.LogInformation("Failed at extracting file content");
         }
+
         return null; // or throw an exception
     }
 

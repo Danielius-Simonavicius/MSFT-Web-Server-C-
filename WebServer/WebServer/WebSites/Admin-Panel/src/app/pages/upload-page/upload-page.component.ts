@@ -10,21 +10,21 @@ import { NgForm } from '@angular/forms';
   templateUrl: './upload-page.component.html',
   styleUrls: ['./upload-page.component.css']
 })
-export class UploadPageComponent implements OnInit{
+export class UploadPageComponent implements OnInit {
   formData = new FormData();
   fileAttached: boolean = false;  // Track if a file is being dragged over the drop zone
-  websites$: Observable<Website[]> | undefined; 
+  websites$: Observable<Website[]> | undefined;
   dataFields = new UploadWebsite();
   submitted: boolean = false;
   fileName?: string;
-  constructor(private websiteService: WebsiteService) {}
+  constructor(private websiteService: WebsiteService) { }
 
 
   ngOnInit(): void {
     this.loadList();
   }
 
-  loadList(){
+  loadList() {
     this.websiteService.getAllWebsites().subscribe(
       (websites) => {
         console.log('Websites:', websites);
@@ -35,34 +35,39 @@ export class UploadPageComponent implements OnInit{
       }
     );
   }
-  
+
+  fileDetails: any = null;
+
   onFolderSelected(event: any) {
     const files = event.target.files;
     if (files.length > 0) {
-      const file =  event.target.files[0];
-      this.formData.append("WebsiteFile", file);
+      const file = event.target.files[0];
+      this.fileDetails = file;
+      //this.formData.append("WebsiteFile", file);
       this.fileAttached = true;
       this.fileName = file.name;
     }
   }
 
   onSubmit(form: NgForm) {
-    if(form.valid){
+    if (form.valid) {
+      this.formData = new FormData();
       this.formData.append("WebsiteName", this.dataFields.WebsiteName);
       this.formData.append("AllowedHosts", this.dataFields.allowedHosts);
       this.formData.append("Path", this.dataFields.path);
       this.formData.append("DefaultPage", this.dataFields.defaultPage);
-      this.websiteService.uploadWebsite(this.formData).subscribe(
-        response => {
+      this.formData.append("WebsiteFile", this.fileDetails);
+      this.websiteService.uploadWebsite(this.formData).subscribe({
+        next: response => {
           console.log('Upload successful:', response);
           this.submitted = true;
           this.loadList();
         },
-        error => {
+        error: error => {
           console.error('Error uploading:', error);
           this.loadList();
         }
-      );
+      });
       this.submitted = true;
     }
   }
@@ -101,6 +106,6 @@ export class UploadPageComponent implements OnInit{
   onDragLeave(event: DragEvent) {
     event.preventDefault();
     event.stopPropagation();
-  
+
   }
 }

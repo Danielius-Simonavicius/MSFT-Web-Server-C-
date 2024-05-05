@@ -123,6 +123,7 @@ public class DefaultResponseService : IGetResponseService
         }
 
         builder.Append($"Access-Control-Allow-Origin: {website.AllowedHosts}\r\n\r\n");
+        
         return builder.ToString();
     }
 

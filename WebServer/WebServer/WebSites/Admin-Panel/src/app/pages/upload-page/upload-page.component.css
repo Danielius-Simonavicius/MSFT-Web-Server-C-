@@ -3,8 +3,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #F8F9FA; /* Very light grey, almost white, for a clean background */
-  color: #4A154B; /* Deep purple for contrasted text */
+  background: #212121; /* Uniform dark grey background across the full page */
+  color: #ffffff; /* White text for contrast */
   min-height: 100vh;
   min-width: 100vw;
   margin: 0;
@@ -23,8 +23,8 @@
   max-width: 1200px; /* Maximum width for larger screens */
   margin: 0 auto; /* Centering the container */
   padding: 20px;
-  background: #FFFFFF; /* Pure white for the main content area */
-  box-shadow: 0 4px 8px rgba(196, 178, 216, 0.5); /* Soft purple shadow for depth */
+  background: #212121; /* Same dark grey for a uniform look */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5); /* Adding depth with black shadow */
 }
 
 /* Left section styling - Form */
@@ -38,7 +38,7 @@
   text-align: center;
   font-weight: bold;
   margin-bottom: 20px;
-  color: #9C27B0; /* Vibrant purple for headings */
+  color: #FFA500; /* Vibrant orange for headings */
 }
 
 .uploadForm {
@@ -54,32 +54,33 @@ input[type="text"],
 input[type="file"] {
   width: 100%;
   padding: 10px;
-  background: #EDE7F6; /* Light purple background for input fields */
-  border: 1px solid #CE93D8; /* Softer purple border */
+  background: #333333; /* Slightly lighter black for input fields */
+  border: 1px solid #555; /* Dark border */
   border-radius: 4px;
-  color: #4A154B; /* Deep purple text */
+  color: #ffffff; /* White text */
   font-size: 16px;
 }
 
-input[type="text"]:focus {
-  border-color: #BA68C8; /* Darker purple for focus */
+input[type="text"]:focus,
+input[type="file"]:focus {
+  border-color: #FFA500; /* Orange for focus */
 }
 
 label {
   display: block;
   margin-bottom: 5px;
-  color: #9C27B0; /* Matching vibrant purple for labels */
+  color: #FFA500; /* Orange for labels */
 }
 
 .error-message {
-  color: #E91E63; /* Bright pink for errors, ensuring visibility */
+  color: #FF4500; /* Brighter, more vivid orange for errors */
   font-size: 14px;
 }
 
 button {
   width: auto;
   padding: 12px 24px;
-  background-color: #9C27B0; /* Consistent vibrant purple for buttons */
+  background-color: #FFA500; /* Consistent orange for buttons */
   color: white;
   border: none;
   border-radius: 4px;
@@ -88,7 +89,7 @@ button {
 }
 
 button:hover {
-  background-color: #BA68C8; /* Darker shade of purple on hover */
+  background-color: #CC8400; /* Darker shade of orange on hover */
 }
 
 /* Right section styling - Displaying websites */
@@ -101,25 +102,25 @@ button:hover {
 }
 
 .website-card {
-  background: #FAF1F8; /* Very light pink for cards, adding warmth */
+  background: #333333; /* Dark grey for card backgrounds */
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(196, 178, 216, 0.3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Soft black shadow for depth */
 }
 
 .website-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 12px rgba(233, 30, 99, 0.5); /* Pink glow on hover */
+  transform: translateY(-5px); /* Slight lift effect */
+  box-shadow: 0 4px 12px rgba(255, 165, 0, 0.6); /* Orange glow on hover */
 }
 
 .website-header h2 {
   font-size: 20px;
-  color: #9C27B0; /* Purple for website names */
+  color: #FFA500; /* Orange for website names */
 }
 
 .website-details p {
   font-size: 16px;
-  color: #4A154B; /* Deep purple for details */
+  color: #E8E8E8; /* Light grey for details */
 }
 
 .drag-drop-zone {
@@ -127,10 +128,10 @@ button:hover {
   align-items: center;
   justify-content: center;
   height: 100px;
-  background-color: #EDE7F6;
-  border: 2px dashed #9C27B0; /* Purple dashed border for the drop zone */
+  background-color: #333333; /* Dark grey matching input fields */
+  border: 2px dashed #FFA500; /* Orange dashed border for the drop zone */
   border-radius: 4px;
-  color: #4A154B;
+  color: #ffffff; /* White text */
   font-size: 16px;
   padding: 20px;
   cursor: pointer;
@@ -138,14 +139,5 @@ button:hover {
 }
 
 .drag-drop-zone:hover {
-  background-color: #D1C4E9; /* Lighter purple on hover */
-}
-
-input[type="file"] {
-  width: 0.1px;
-  height: 0.1px;
-  opacity: 0;
-  overflow: hidden;
-  position: absolute;
-  z-index: -1;
+  background-color: #212121; /* Slightly darker grey on hover */
 }

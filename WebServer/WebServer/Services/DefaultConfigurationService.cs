@@ -1,3 +1,4 @@
+using System.Reflection;
 using Newtonsoft.Json;
 using WebServer.Models;
 
@@ -5,12 +6,14 @@ namespace WebServer.Services;
 
 public class DefaultConfigurationService : IConfigurationService
 {
-    private readonly string jsonFilePath = "./WebsiteConfig.json";
+    private readonly string _jsonFilePath;
     private readonly ILogger _logger;
-    private IMessengerService _messengerService;
+    private readonly IMessengerService _messengerService;
     public DefaultConfigurationService(ILogger<DefaultConfigurationService> logger,
         IMessengerService messengerService)
     {
+        var assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        _jsonFilePath = Path.Combine(assemblyPath!, "WebsiteConfig.json");
         _logger = logger;
         _messengerService = messengerService;
     }
@@ -19,7 +22,7 @@ public class DefaultConfigurationService : IConfigurationService
     {
         _logger.LogInformation("Reloading Website configuration");
         // Read JSON file contents into a string
-        var jsonContent = File.ReadAllText(jsonFilePath);
+        var jsonContent = File.ReadAllText(_jsonFilePath);
         var serverConfig = JsonConvert.DeserializeObject<ServerConfigModel>(jsonContent);
         return serverConfig!;
     }
@@ -30,7 +33,7 @@ public class DefaultConfigurationService : IConfigurationService
         var updatedConfig = JsonConvert.SerializeObject(model, Formatting.Indented);
 
         // Write the updated JSON back to the file
-        File.WriteAllText(jsonFilePath, updatedConfig);
+        File.WriteAllText(_jsonFilePath, updatedConfig);
         return true;
     }
 
@@ -57,7 +60,7 @@ public class DefaultConfigurationService : IConfigurationService
             var updatedConfig = JsonConvert.SerializeObject(serverConfig, Formatting.Indented);
 
             // Write the updated JSON back to the file
-            File.WriteAllText(jsonFilePath, updatedConfig);
+            File.WriteAllText(_jsonFilePath, updatedConfig);
         }
         else
         {
@@ -83,7 +86,7 @@ public class DefaultConfigurationService : IConfigurationService
         //serializing updated config
         var updatedConfig = JsonConvert.SerializeObject(serverConfig, Formatting.Indented);
         // Write the updated JSON back to the file
-        File.WriteAllText(jsonFilePath, updatedConfig);
+        File.WriteAllText(_jsonFilePath, updatedConfig);
         _messengerService.SendConfigChangedEvent();
     }
 }

@@ -43,10 +43,10 @@
     },
     {
       "WebsiteId": "ef7e9340-034a-4382-ab89-19c78ab2cf25",
-      "WebsiteName": "Frontend",
+      "WebsiteName": "Gym website",
       "AllowedHosts": "*",
       "DefaultPage": "index.html",
-      "Path": "ef7e9340-034a-4382-ab89-19c78ab2cf25/frontend",
+      "Path": "0daff854-f4f1-47dc-baa7-b0a640d16afc/gymWebsite",
       "WebsitePort": 8003
     },
     {

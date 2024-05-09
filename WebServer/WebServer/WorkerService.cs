@@ -119,7 +119,7 @@ public class WorkerService : BackgroundService, IMessengerListener
         {
             var totalBytes = new List<byte>();
             var buffer = new byte[8192];
-            var handler = await httpServer.AcceptAsync();
+            var handler = await httpServer.AcceptAsync(threadCancellationToken.Token);
             var request = new HttpRequestModel();
             var totalReceivedBytes = 0;
 
